@@ -83,8 +83,18 @@
   .guide-card{width:200px;padding:24px 18px;border-radius:16px;background:var(--surface);border:1px solid var(--border);text-align:center;transition:all .4s cubic-bezier(.34,1.56,.64,1);cursor:pointer}
   .guide-card:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:0 16px 40px var(--glow)}
   .guide-card .gi{font-size:2.2rem;display:block;margin-bottom:8px}
-  .guide-card h4{font-size:.9rem;margin-bottom:4px}
+  .guide-card h4{font-size:.9rem;margin-bottom:4px;color:var(--text)}
   .guide-card p{font-size:.8rem;color:var(--text-dim);margin:0}
+  .guide-card:active{transform:scale(.95)}
+
+  .guide-detail{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .guide-detail.open{display:flex}
+  .guide-detail-inner{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:36px 32px;max-width:500px;width:100%;position:relative;backdrop-filter:blur(20px);box-shadow:0 40px 80px rgba(0,0,0,.5)}
+  .guide-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-dim);font-size:1.3rem;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .3s}
+  .guide-close:hover{background:rgba(255,255,255,.05);color:var(--text)}
+  .guide-detail-inner h3{font-size:1.2rem;margin-bottom:12px}
+  .detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .detail-tag{padding:6px 14px;border-radius:8px;border:1px solid var(--border);font-size:.8rem;color:var(--text-dim)}
 
   /* Progress */
   .progress{position:fixed;bottom:28px;left:10%;right:10%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;z-index:50}
@@ -180,9 +190,17 @@
       <h2 id="guidesTitle">Выберите игру</h2>
       <p id="guidesDesc">Нажмите на любую игру в меню или в списке</p>
       <div class="guide-grid" id="guideGrid">
-        <div class="guide-card" id="g1"><span class="gi">📖</span><h4 id="g1t">Тактики</h4><p id="g1d">Стратегии, карты и позиционирование</p></div>
-        <div class="guide-card" id="g2"><span class="gi">⌨️</span><h4 id="g2t">Бинды и настройки</h4><p id="g2d">Клавиши, sens, конфиги</p></div>
-        <div class="guide-card" id="g3"><span class="gi">⚡</span><h4 id="g3t">Оптимизация</h4><p id="g3d">Фпс, графика, параметры запуска</p></div>
+        <div class="guide-card" onclick="showGuide(0)" id="gc0"><span class="gi">📖</span><h4 id="g0t">Тактики</h4><p id="g0d">Стратегии, карты и позиционирование</p></div>
+        <div class="guide-card" onclick="showGuide(1)" id="gc1"><span class="gi">⌨️</span><h4 id="g1t">Бинды и настройки</h4><p id="g1d">Клавиши, sens, конфиги</p></div>
+        <div class="guide-card" onclick="showGuide(2)" id="gc2"><span class="gi">⚡</span><h4 id="g2t">Оптимизация</h4><p id="g2d">Фпс, графика, параметры запуска</p></div>
+      </div>
+      <div class="guide-detail" id="guideDetail">
+        <div class="guide-detail-inner">
+          <button class="guide-close" onclick="closeGuide()">✕</button>
+          <h3 id="detailTitle">Тактики</h3>
+          <p id="detailText" style="color:var(--text-dim);line-height:1.8;font-size:.95rem;">Подробное описание раздела</p>
+          <div class="detail-tags" id="detailTags"></div>
+        </div>
       </div>
       <div style="margin-top:16px;display:none" id="gameLink"></div>
     </div>
@@ -239,8 +257,6 @@
     r.style.setProperty('--accent2', p.accent2);
     r.style.setProperty('--glow', p.glow);
     r.style.setProperty('--accent-grad', `linear-gradient(135deg,${p.accent},${p.accent2})`);
-    // update canvas colors
-    if (window.particleColors) window.particleColors(p.accent, p.accent2);
   }
 
   // === HORIZONTAL SCROLL ===
@@ -317,38 +333,103 @@
   }, { passive: false });
   document.addEventListener('touchend', function() { dragging = false; setTimeout(snap, 150); });
 
-  // === GAME GUIDE DATA ===
+  // === GUIDE DATA ===
   const guideData = {
-    cs2: { name:'CS2', g1t:'Спрей-контроль', g1d:'Паттерны отдачи AK-47 и M4. Тренировка spray transfer и burst.', g2t:'Бинды и конфиг', g2d:'eDPI 800-1200, 1280x960 stretched, jump на колёсико, nade binds.', g3t:'Настройки графики', g3d:'Всё на LOW, Shadows LOW, MSAA 2x, FOV 90, HUD на минимум.' },
-    dota: { name:'Dota 2', g1t:'Саппорт и керри', g1d:'Бебиситинг, пуллинг, харасс, денай. Для керри — ластхит 80+ к 10 мин.', g2t:'Бинды и автоexec', g2d:'Alt+ПКМ пинг, F1 герой, слоты Z-X-C-V-B-N. Autoexec.cfg для FPS.', g3t:'Оптимизация', g3d:'-novid -high -threads 4. Vulkan для AMD, DX11 для старых. Minify мод для FPS.' },
-    minecraft: { name:'Minecraft', g1t:'Выживание и фермы', g1d:'День 1-10: дерево→камень→алмазы→зачарования. Железная ферма, опыт-ферма.', g2t:'Бинды и настройки', g2d:'Q выброс, F offhand, R переключение. FOV 90-100, чувствительность 80-100%.', g3t:'Оптимизация', g3d:'OptiFine/Sodium для FPS. Render Distance 8-12, Graphics FAST, Smooth Lighting MIN.' },
-    fortnite: { name:'Fortnite', g1t:'Строительство и редакт', g1d:'Wall+Ramp, 90-е, туннели. Редакты: окна, углы, тройные редаки.', g2t:'Бинды', g2d:'Wall на Q, Ramp на E, Floor на C, Cone на X. Редакт на G или боковая кнопка.', g3t:'Настройки', g3d:'View Distance EPIC, остальное LOW. 3D Resolution 100%, VSync OFF. Чувствительность 6-8 @ 800 DPI.' },
-    pubg: { name:'PUBG', g1t:'Оружие и ротация', g1d:'M416 с компенсатором, Beryl для урона. Ротация по краю зоны, транспорт обязателен.', g2t:'Бинды', g2d:'Q/E — lean, Z — лечь, C — присесть, B — режим стрельбы, V — камера 1/3 лицо.', g3t:'Оптимизация', g3d:'Всё на VERY LOW, Screen Scale 100, Anti-Aliasing LOW. FOV 90-100.' },
-    overwatch: { name:'Overwatch', g1t:'Герои и роли', g1d:'Tank (Райнхардт, D.Va), Damage (Солдат, Трейсер), Support (Ана, Кирико).', g2t:'Бинды', g2d:'Q ульт, Shift способность 1, E способность 2. Чувствительность 4-8 @ 800 DPI.', g3t:'Настройки', g3d:'Render Scale 100%, всё LOW. FOV 103. VSync OFF, тройная буферизация OFF.' },
-    dbd: { name:'Dead by Daylight', g1t:'Выживший и киллер', g1d:'Dead Hard, Borrowed Time, Window of Opportunity. Для киллера — Pop, Corrupt, BBQ.', g2t:'Бинды', g2d:'Shift спринт, Space паллета/окно, Ctrl красться. FOV 103.', g3t:'Настройки', g3d:'Всё LOW, Shadows LOW, Anti-Aliasing OFF. VSync OFF.' },
-    rust: { name:'Rust', g1t:'Первый день и база', g1d:'200 камня + 100 дерева. База 2x2 с шкафом. Honeycomb защита от рейда.', g2t:'Бинды', g2d:'Q крафт, Tab инвентарь, G бросить, Ctrl красться, B строительство.', g3t:'Оптимизация', g3d:'Draw Distance 500-1000, Shadows OFF, Water/Land LOW. FOV 90-100.' },
-    valorant: { name:'Valorant', g1t:'Агенты и оружие', g1d:'Duelists (Jett, Phoenix), Initiators (Sova), Controllers (Omen), Sentinels (Sage). Phantom/Vandal.', g2t:'Бинды', g2d:'Q способность 1, E способность 2, C способность 3, X ульт. eDPI 200-600.', g3t:'Настройки', g3d:'Всё LOW, Bloom OFF, Distortion OFF. FOV 103. Чувствительность 0.3-0.5 @ 800 DPI.' },
-    rdr2: { name:'RDR 2', g1t:'Деньги и охота', g1d:'Шкуры легендарных зверей, карты сокровищ, нападение на поезда. Прокачка Dead Eye.', g2t:'Управление', g2d:'Q/E укрытие, R перезарядка, Space прыжок. Dead Eye на R3/Shift.', g3t:'Настройки', g3d:'API Vulkan, TAA Medium, Resolution Scale 100%. Shadows/Water LOW.' },
-    gtav: { name:'GTA V', g1t:'Ограбления и Online', g1d:'Cayo Perico Heist ($1-2M/ч), агентство, байкерский клуб. Пассивный доход с Nightclub.', g2t:'Бинды', g2d:'F взаимодействие, G граната, Q укрытие, E поднять. Z переключение камеры.', g3t:'Настройки', g3d:'Shadows OFF, MSAA 2x, Grass LOW. VSync OFF. Population Density/Scaling 100%.' },
-    wot: { name:'World of Tanks', g1t:'Тактика и броня', g1d:'ВЛД/НЛД уязвимости. Hull-down от башни. Кусты для маскировки (+50%).', g2t:'Бинды', g2d:'X выключить орудие, E маркер цели, G отход. Ctrl+ПКМ маркер на карту.', g3t:'Оптимизация', g3d:'Графика STD/MAX. Трава OFF, эффекты OFF. Дальность отрисовки 100%.' }
+    cs2: { name:'CS2',
+      g0: { t:'Спрей-контроль', d:'Тренируй паттерн AK-47 и M4 в режиме тренировки. Первые 3-5 пуль — строго вниз, потом диагональ вправо. Spray transfer — перенос на следующую цель. Используй Recoil Master в Steam Workshop. Про-настройки: eDPI 800-1200, чувствительность 1.2-2.0 @ 800 DPI.', tags:['AK-47 спрей','M4 контроль','spray transfer','burst','tap'] },
+      g1: { t:'Бинды и конфиг', d:'Resolution: 1280×960 stretched (широкие модели). Autoexec.cfg: cl_crosshaircolor 5, sensitivity 2.0, viewmodel_preset 1. Бинды: jump на колёсико (bhop), nade binds через alias. Про-конфиги: скачай с prosettings.net.', tags:['1280×960','eDPI','autoexec','jump scroll','nade binds'] },
+      g2: { t:'Оптимизация', d:'Video: всё на LOW, Shadows LOW, MSAA 2x или OFF, Texture Streaming OFF. NVIDIA: Low Latency Mode ON, Power Management MAX. Launch options: -novid -high -noaafonts -threads 8. Монитор 144Hz+ обязателен.', tags:['LOW settings','NVIDIA control panel','launch params','144Hz'] } },
+    dota: { name:'Dota 2',
+      g0: { t:'Саппорт', d:'Бебиситинг — защита керри. Харасс — давление на врага. Пуллинг — отвод крипов к нейтралам. Денай — добивать своих крипов ниже 50% ХП. Стартовый закуп: 2 Observer, Courier, Tango, Clarity, веточки. Варды на возвышенностях и в проходах.', tags:['пуллинг','денай','вардинг','харасс','стартовый закуп'] },
+      g1: { t:'Керри', d:'80+ крипов к 10 минуте — идеал. 4-5/мин — хорошо. Тренируй ластхит против ботов. Изучи анимацию атаки героя (Sniper — лучшая, Drow/Clinkz — медленная). Safe Lane для керри, контр-пики: AA, Riki, Ursa, OD, SB, Troll.', tags:['ластхит','farm','контр-пики','Semi-Carry','Hard-Carry'] },
+      g2: { t:'Оптимизация', d:'Параметры запуска: -novid -high -noaafonts -novr -nojoy +fps_max 144 -threads 8 +map_enable_portrait_worlds 0. Vulkan для AMD, DX11 для старых ПК. Autoexec.cfg с 60+ командами (dota_portrait_animate 0, r_ssao 0, r_grass_quality 0). Minify — программа с GitHub, убирает эффекты, не банят.', tags:['autoexec','Vulkan/DX11','launch options','Minify','FPS'] } },
+    minecraft: { name:'Minecraft',
+      g0: { t:'Выживание', d:'День 1: дерево — камень — уголь — убежище. День 2-4: ищи деревню, кровать, еду. День 5-10: копай на Y=11, ищи алмазы, сделай зачаровательный стол. Позже: построй железную ферму + опыт-ферму со спаунера. Автофермы на редстоуне.', tags:['Y=11','алмазы','фермы','редстоун','деревня'] },
+      g1: { t:'Бинды', d:'Q — выбросить, F — offhand (щит/тотем), R — переключение режима, L — зачарования. FOV 90, чувствительность 80-100%. Отключи автопрыжок. Для PvP: CPS >6, крит-удары с прыжка, щит вовремя.', tags:['offhand','FOV','CPS','крит-удары','PvP'] },
+      g2: { t:'Оптимизация', d:'Установи OptiFine или Sodium + Lithium + Phosphor (Fabric). Render Distance 8-12, Graphics FAST, Smooth Lighting MIN, Clouds OFF. В Java: выдели 4-8GB RAM. В Bedrock: отключи красивые небеса и облака.', tags:['OptiFine','Sodium','Fabric','RAM','Render Distance'] } },
+    fortnite: { name:'Fortnite',
+      g0: { t:'Строительство', d:'База: Wall + Ramp. 90-е — быстрое вращение с подъёмом. Туннели — защита при движении. Редакты: окна (шотган + редакт назад), углы (сбоку), тройные редаки (пол+стена+потолок). Тренируй в Creative 15 мин/день.', tags:['90-е','туннели','редакты','строительство','креатив'] },
+      g1: { t:'Бинды', d:'Wall — Q, Ramp — E, Floor — C, Cone — X. Редакт — боковая кнопка мыши. Чувствительность 6-8 @ 800 DPI. Build Mode Sensitivity 1.8x-2.0x. Pro-раскладка: wall+ramp на двух кнопках мыши.', tags:['бinds','чувствительность','build mode','редакт','pro layout'] },
+      g2: { t:'Настройки', d:'View Distance EPIC (видеть дальше), Textures LOW, Shadows OFF. 3D Resolution 100%. VSync OFF, FPS Limit 240. NVIDIA: Low Latency ON, Reflex LOW LATENCY. Звук: 3D Audio ON.', tags:['View Distance','3D Resolution','Reflex','VSync OFF','FPS Limit'] } },
+    pubg: { name:'PUBG',
+      g0: { t:'Тактика', d:'Приземляйся к зданиям. M416 (стабильный) или Beryl M762 (урон). Smoke grenade — обязательна. Ротация по краю зоны (blue zone edge). Транспорт обязателен на больших картах. В конце — играй от здания или камня.', tags:['M416','Beryl','ротация','smoke','blue zone'] },
+      g1: { t:'Бинды', d:'Q/E — lean (используй постоянно), Z — лечь, C — присесть, B — режим стрельбы, V — камера 1/3 лицо, R — перезарядка. Mouse4/Mouse5 — smoke/flash. Ctrl+1/2/3/4 — смена сиденья.', tags:['lean','камера','быстрая стрельба','смоки','драйв'] },
+      g2: { t:'Оптимизация', d:'Screen Scale 100, Anti-Aliasing LOW, Post-Processing VERY LOW. FOV 90-100. NVIDIA: Digital Vibrance 70% (ярче видеть врагов). Вертикальная синхронизация OFF. Всё остальное VERY LOW.', tags:['screen scale','FOV','Digital Vibrance','VERY LOW','VSync OFF'] } },
+    overwatch: { name:'Overwatch',
+      g0: { t:'Герои', d:'Tank: Reinhardt, D.Va, Winston. Damage: Soldier 76, Tracer, Widowmaker. Support: Ana, Mercy, Kiriko. В Competitive: 2-2-2 состав. Меняй героя если тебя контрят — не будь упёртым.', tags:['Tank','Damage','Support','2-2-2','counter-pick'] },
+      g1: { t:'Бинды', d:'Q — ульт, Shift — способность 1, E — способность 2, R — перезарядка. Scroll — смена оружия. Чувствительность 4-8 @ 800 DPI. FOV 103. Crosshair: короткий зелёный или розовый.', tags:['чувствительность','FOV 103','crosshair','ульт','способности'] },
+      g2: { t:'Настройки', d:'Render Scale 100%, всё LOW или OFF. Shadows LOW, Fog LOW. NVIDIA: Low Latency ON, Power MAX. VSync OFF, тройная буферизация OFF. Монитор 144+ Hz. Звук: Dolby Atmos для позиционирования.', tags:['Render Scale','LOW settings','NVIDIA','144Hz','Dolby Atmos'] } },
+    dbd: { name:'Dead by Daylight',
+      g0: { t:'Выживший', d:'Перки: Dead Hard (уворот), Borrowed Time (спасение), Windows of Opportunity (подсветка паллет). Loop: крути паллеты и окна. Не паникуй при обнаружении. Сброс паллеты раньше > смерть с паллетой.', tags:['Dead Hard','Borrowed Time','Windows','loop','паллеты'] },
+      g1: { t:'Киллер', d:'Перки: Corrupt Intervention (блок генов), Pop Goes the Weasel (слом гена), NOED (финал). Не трать >30 сек на погоню. Proxy camp — отойди на 20м от крюка и вернись. Используй power вовремя.', tags:['BBQ','Corrupt','Pop','NOED','patrol'] },
+      g2: { t:'Настройки', d:'FOV 103 (максимум). Всё LOW, Shadows LOW, Anti-Aliasing OFF. VSync OFF. Чувствительность 50-70. Звук: Survivor — громко шаги и хит, Killer — громко генераторы.', tags:['FOV','LOW settings','звук','чувствительность','VSync OFF'] } },
+    rust: { name:'Rust',
+      g0: { t:'Первый день', d:'200 камня + 100 дерева → каменный топор/кирка. Найди реку или море → плот к менее населённому району. База 2×1 из камня. Tool Cupboard в центре, запри. Еда: охоться или ягоды (красные нельзя).', tags:['старт','база 2x1','TC','камень','дерево'] },
+      g1: { t:'База', d:'Honeycomb — внешние стены вокруг. Двери железные + code lock. Окна с решётками. Shotgun trap у входа. Заливай бензин в TC. Укрепляй стены вокруг TC до металла.', tags:['honeycomb','code lock','TC','shotgun trap','рейдозащита'] },
+      g2: { t:'Оптимизация', d:'Draw Distance 500-1000, Shadows OFF, Water/Land Quality LOW, Reflections OFF. FOV 90-100. Всё на LOW. В launch options: -high -window-mode exclusive. FPS cap = частота монитора.', tags:['Draw Distance','FOV','LOW','launch options','FPS cap'] } },
+    valorant: { name:'Valorant',
+      g0: { t:'Агенты', d:'Duelists: Jett (агрессия), Phoenix (самолечение). Initiators: Sova (инфо), KAY/O (саппрессия). Controllers: Omen (дымы), Brimstone (быстрые дымы). Sentinels: Sage (хил, стена), Killjoy (ловушки).', tags:['Jett','Sova','Omen','Sage','композиция'] },
+      g1: { t:'Оружие', d:'Phantom — стабильный спрей, глушит звук. Vandal — 1 tap в голову на любой дистанции. Spectre — force buy. Operator — 1 в тело. Classic — правой кнопкой залп в упор. Экономика: eco/force/half/full buy.', tags:['Phantom','Vandal','Spectre','эко','фулл бай'] },
+      g2: { t:'Настройки', d:'Всё LOW, Bloom OFF, Distortion OFF. FOV 103. Чувствительность 0.3-0.5 @ 800 DPI (eDPI 200-600). Crosshair: 1-3-2-2 зелёный/белый. NVIDIA: Low Latency ON, Reflex LOW LATENCY.', tags:['eDPI','crosshair','Reflex','FOV 103','LOW settings'] } },
+    rdr2: { name:'RDR 2',
+      g0: { t:'Деньги', d:'Легендарные звери → шкуры в Trapper. Карты сокровищ → золото ($500/слиток). Ограбление поездов (после сюжета). Банк Леватикуса в конце. Dead Eye: прокачай до 3 уровня — меть 2+ цели.', tags:['охота','сокровища','Dead Eye','ограбления','золото'] },
+      g1: { t:'Управление', d:'Q/E — укрытие, R — перезарядка, Space — прыжок. Dead Eye — Shift (или R3). Оружие: Lancaster Repeater (лучший), Schofield Revolver (урон). Не стой на открытом — враги стреляют метко.', tags:['Dead Eye','Lancaster','укрытия','лошадь','оружие'] },
+      g2: { t:'Настройки', d:'API Vulkan. TAA Medium. Resolution Scale 100%. Shadows/Water LOW. Grass LOW. Монитор 60Hz — VSync Половина. NVIDIA: Power MAX, Low Latency ON.', tags:['Vulkan','TAA','Resolution Scale','LOW','60Hz'] } },
+    gtav: { name:'GTA V',
+      g0: { t:'Ограбления', d:'Cayo Perico Heist — $1-2M/ч в соло. Агентство — контракты ($50k+). Байкерский клуб — пассивный доход. Nightclub — афк-доход. Купи Kosatka (субмарина) первой.', tags:['Cayo Perico','агентство','Nightclub','Kosatka','пассивный доход'] },
+      g1: { t:'Бинды', d:'F — взаимодействие, G — граната, Q — укрытие, E — поднять, Z — 1/3 лицо. Space — прыжок/ручник. Numpad +/- — время. Меню взаимодействия — M.', tags:['клавиши','GTA Online','управление','гранаты','транспорт'] },
+      g2: { t:'Настройки', d:'Shadows OFF, MSAA 2x, Grass LOW. Population Density/Variety 100%. VSync OFF. Монитор 60Hz — ограничь FPS 60. В GTA Online: отключи голосовой чат для FPS.', tags:['MSAA','Shadows OFF','FPS 60','GTA Online','настройки'] } },
+    wot: { name:'World of Tanks',
+      g0: { t:'Тактика', d:'Hull-down — играй от башни (обратный склон). Кусты дают +50% маскировки. После выстрела откатывайся. Изучи ВЛД/НЛД уязвимости каждого танка. На картах: Энск — железка, Песчаная река — горка.', tags:['hull-down','кусты','ВЛД','НЛД','карты'] },
+      g1: { t:'Бинды', d:'X — выключить орудие (сбитие захвата), E — «Огонь!» (маркер), G — «Назад!», Shift — снайперка. Ctrl+ПКМ — маркер на миникарту. Зажим ПКМ — открепить прицел.', tags:['маркеры','снайперка','захват','прицел','миникарта'] },
+      g2: { t:'Оптимизация', d:'Графика STD (стандартная). Трава OFF (в снайперке), эффекты OFF. Дальность отрисовки 100%. NVIDIA: Digital Vibrance 100% (ярче). В launch options: -dx11 -high -threads 8.', tags:['STD','трава OFF','Digital Vibrance','launch options','dx11'] } }
   };
+
+  // Current game key
+  let currentGame = null;
 
   // === SELECT GAME ===
   function selectGame(game) {
     applyPalette(game);
+    currentGame = game;
     const data = guideData[game];
     if (data) {
       document.getElementById('guidesTitle').textContent = 'Гайды — ' + data.name;
       document.getElementById('guidesDesc').textContent = data.name + ' — полное руководство';
-      document.getElementById('g1t').textContent = data.g1t;
-      document.getElementById('g1d').textContent = data.g1d;
-      document.getElementById('g2t').textContent = data.g2t;
-      document.getElementById('g2d').textContent = data.g2d;
-      document.getElementById('g3t').textContent = data.g3t;
-      document.getElementById('g3d').textContent = data.g3d;
+      for (let i = 0; i < 3; i++) {
+        document.getElementById('g' + i + 't').textContent = data['g' + i].t;
+        document.getElementById('g' + i + 'd').textContent = data['g' + i].d;
+      }
     }
     goTo(2);
   }
+
+  // === SHOW GUIDE DETAIL ===
+  function showGuide(idx) {
+    if (!currentGame || !guideData[currentGame]) return;
+    const data = guideData[currentGame]['g' + idx];
+    if (!data) return;
+    document.getElementById('detailTitle').textContent = data.t;
+    document.getElementById('detailText').textContent = data.d;
+    const tagsEl = document.getElementById('detailTags');
+    tagsEl.innerHTML = '';
+    data.tags.forEach(function(t) {
+      const span = document.createElement('span');
+      span.className = 'detail-tag';
+      span.textContent = t;
+      tagsEl.appendChild(span);
+    });
+    document.getElementById('guideDetail').classList.add('open');
+  }
+
+  function closeGuide() {
+    document.getElementById('guideDetail').classList.remove('open');
+  }
+
+  // Close on bg click
+  document.getElementById('guideDetail').addEventListener('click', function(e) {
+    if (e.target === this) closeGuide();
+  });
 
   // Make selectGame global for onclick
   window.selectGame = selectGame;
@@ -367,63 +448,72 @@
     });
   });
 
-  // === CANVAS PARTICLES ===
+  // === CANVAS STARS ===
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
-  let W, H, particles = [];
-  let pColor1 = '#00d4ff', pColor2 = '#0066ff';
-  window.particleColors = function(c1, c2) { pColor1 = c1; pColor2 = c2; };
+  let W, H, stars = [];
 
   function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
   window.addEventListener('resize', resize); resize();
 
-  const NUM = 80;
+  const NUM = 200;
   for (let i = 0; i < NUM; i++) {
-    particles.push({
+    stars.push({
       x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3,
-      r: Math.random() * 2.5 + 1,
-      s: Math.random() * 2 + 1 // shape: 1=circle, 2=triangle, 3=square
+      r: Math.random() * 1.5 + .3,
+      vx: (Math.random() - .5) * .08,
+      vy: (Math.random() - .5) * .08,
+      speed: Math.random() * .02 + .005,
+      phase: Math.random() * Math.PI * 2
     });
   }
 
-  function drawParticles() {
+  function drawStars() {
     ctx.clearRect(0, 0, W, H);
     const absP = Math.abs(current / maxOff) || 0;
-    particles.forEach(function(p, i) {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    const t = Date.now() * .001;
 
-      const parallaxOffset = p.x + (i % 3 - 1) * absP * 40;
-      const alpha = .15 + (i / NUM) * .15;
-      const color = i % 2 === 0 ? pColor1 : pColor2;
+    stars.forEach(function(s, i) {
+      // Slow drift
+      s.x += s.vx; s.y += s.vy;
+      if (s.x < 0) s.x = W; if (s.x > W) s.x = 0;
+      if (s.y < 0) s.y = H; if (s.y > H) s.y = 0;
+
+      // Parallax offset
+      const px = s.x + (i % 3 - 1) * absP * 20;
+
+      // Twinkle
+      const twinkle = Math.sin(t * s.speed * 10 + s.phase) * .4 + .6;
+      const alpha = twinkle * .6;
+
       ctx.beginPath();
-      if (p.s < 1.5) {
-        ctx.arc(parallaxOffset, p.y + (i % 2) * absP * 30, p.r, 0, Math.PI * 2);
-      } else if (p.s < 2.5) {
-        ctx.moveTo(parallaxOffset, p.y - p.r * 2);
-        ctx.lineTo(parallaxOffset - p.r, p.y + p.r);
-        ctx.lineTo(parallaxOffset + p.r, p.y + p.r);
-        ctx.closePath();
-      } else {
-        ctx.rect(parallaxOffset - p.r, p.y - p.r, p.r * 2, p.r * 2);
+      ctx.arc(px, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+      ctx.fill();
+
+      // Glow
+      if (s.r > 1) {
+        ctx.beginPath();
+        ctx.arc(px, s.y, s.r * 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * .08) + ')';
+        ctx.fill();
       }
-      ctx.fillStyle = color;
-      ctx.globalAlpha = alpha;
-      ctx.fill();
 
-      // glow
-      ctx.beginPath();
-      ctx.arc(parallaxOffset, p.y + (i % 2) * absP * 30, p.r * 3, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.globalAlpha = alpha * .2;
-      ctx.fill();
+      // Tiny cross for bright stars
+      if (s.r > 1.2) {
+        ctx.beginPath();
+        ctx.moveTo(px - s.r * 6, s.y);
+        ctx.lineTo(px + s.r * 6, s.y);
+        ctx.moveTo(px, s.y - s.r * 6);
+        ctx.lineTo(px, s.y + s.r * 6);
+        ctx.strokeStyle = 'rgba(255,255,255,' + (alpha * .2) + ')';
+        ctx.lineWidth = .5;
+        ctx.stroke();
+      }
     });
-    ctx.globalAlpha = 1;
-    requestAnimationFrame(drawParticles);
+    requestAnimationFrame(drawStars);
   }
-  drawParticles();
+  drawStars();
 
   // Init
   track.style.transform = 'translate3d(0,0,0)';
