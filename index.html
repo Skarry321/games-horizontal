@@ -181,67 +181,100 @@
   const dots = document.querySelectorAll('.dot');
   const trackFill = document.getElementById('trackFill');
   const totalSlides = 4;
-  let current = 0;
-  let isScrolling = false;
+  const maxOffset = -(totalSlides - 1) * 100;
 
-  // Parallax layers
+  let targetOffset = 0;
+  let currentOffset = 0;
+  let isAnimating = false;
+  let velocity = 0;
+
   const parallaxLayers = document.querySelectorAll('.parallax-layer');
 
-  function goToSlide(index, instant) {
-    index = Math.max(0, Math.min(index, totalSlides - 1));
-    current = index;
-    const offset = -index * 100;
-    slides.style.transition = instant ? 'none' : 'transform 1.2s cubic-bezier(.22,1,.36,1)';
-    slides.style.transform = `translateX(${offset}vw)`;
-
-    // Update dots
+  function updateSlide(index) {
     dots.forEach((d, i) => d.classList.toggle('active', i === index));
-
-    // Track
     trackFill.style.width = `${(index / (totalSlides - 1)) * 100}%`;
-
-    // Parallax
-    parallaxLayers.forEach(layer => {
-      const speed = layer.classList.contains('pl-bg') ? .15 : layer.classList.contains('pl-mid') ? .25 : .35;
-      const offset = (index * 100 * speed);
-      layer.style.transform = `translateX(${offset}px)`;
-    });
-
-    isScrolling = false;
   }
 
-  // Wheel → horizontal scroll
+  function loop() {
+    const diff = targetOffset - currentOffset;
+    if (Math.abs(diff) > 0.01 || Math.abs(velocity) > 0.01) {
+      velocity += diff * 0.08;
+      velocity *= 0.82;
+      currentOffset += velocity;
+
+      // Clamp
+      if (currentOffset > 0) { currentOffset = 0; velocity = 0; }
+      if (currentOffset < maxOffset) { currentOffset = maxOffset; velocity = 0; }
+
+      slides.style.transform = `translateX(${currentOffset}vw)`;
+
+      // Parallax
+      const absProgress = Math.abs(currentOffset / maxOffset) * (totalSlides - 1);
+      parallaxLayers.forEach(layer => {
+        const speed = layer.classList.contains('pl-bg') ? .15 : layer.classList.contains('pl-mid') ? .25 : .35;
+        layer.style.transform = `translateX(${absProgress * 100 * speed}px)`;
+      });
+
+      // Update UI
+      const idx = Math.round(Math.abs(currentOffset / 100));
+      updateSlide(Math.min(idx, totalSlides - 1));
+
+      requestAnimationFrame(loop);
+    } else {
+      isAnimating = false;
+    }
+  }
+
+  // Wheel → inertia horizontal
   document.addEventListener('wheel', e => {
-    if (e.ctrlKey || isScrolling) return;
+    if (e.ctrlKey) return;
     e.preventDefault();
-    if (e.deltaY > 0 && current < totalSlides - 1) { isScrolling = true; goToSlide(current + 1); }
-    else if (e.deltaY < 0 && current > 0) { isScrolling = true; goToSlide(current - 1); }
+    targetOffset -= e.deltaY * 0.35;
+    targetOffset = Math.max(maxOffset, Math.min(0, targetOffset));
+    if (!isAnimating) { isAnimating = true; requestAnimationFrame(loop); }
   }, { passive: false });
 
-  // Dots click
+  // Dots
   dots.forEach(dot => {
     dot.addEventListener('click', () => {
       const i = parseInt(dot.dataset.i);
-      if (i !== current) goToSlide(i);
+      targetOffset = -i * 100;
+      velocity = (targetOffset - currentOffset) * 0.15;
+      if (!isAnimating) { isAnimating = true; requestAnimationFrame(loop); }
     });
   });
 
   // Keyboard
   document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); if (current < totalSlides - 1) goToSlide(current + 1); }
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); if (current > 0) goToSlide(current - 1); }
-  });
-
-  // Touch
-  let touchStartX = 0;
-  document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
-  document.addEventListener('touchend', e => {
-    const diff = touchStartX - e.changedTouches[0].screenX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0 && current < totalSlides - 1) goToSlide(current + 1);
-      else if (diff < 0 && current > 0) goToSlide(current - 1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      targetOffset = Math.max(maxOffset, targetOffset - 100);
+      velocity = (targetOffset - currentOffset) * 0.15;
+      if (!isAnimating) { isAnimating = true; requestAnimationFrame(loop); }
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      targetOffset = Math.min(0, targetOffset + 100);
+      velocity = (targetOffset - currentOffset) * 0.15;
+      if (!isAnimating) { isAnimating = true; requestAnimationFrame(loop); }
     }
   });
+
+  // Touch drag
+  let touchStartX = 0, touchLastX = 0, isDragging = false;
+  document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchLastX = touchStartX; isDragging = true; });
+  document.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const dx = e.changedTouches[0].screenX - touchLastX;
+    targetOffset += dx * 0.3;
+    targetOffset = Math.max(maxOffset, Math.min(0, targetOffset));
+    touchLastX = e.changedTouches[0].screenX;
+    if (!isAnimating) { isAnimating = true; requestAnimationFrame(loop); }
+  }, { passive: false });
+  document.addEventListener('touchend', () => { isDragging = false; });
+
+  updateSlide(0);
 </script>
 </body>
 </html>
