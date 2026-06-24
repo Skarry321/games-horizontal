@@ -3,341 +3,269 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameGuide — каталог игровых гайдов</title>
+<title>GameGuide — гайды по играм</title>
 <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root{--bg:#0a0a0f;--text:#fff;--text-dim:rgba(255,255,255,.45);--accent:#00d4ff;--accent2:#0066ff;--accent-grad:linear-gradient(135deg,#00d4ff,#0066ff);--glow:rgba(0,212,255,.15);--font:'Segoe UI',system-ui,sans-serif}
-  html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text)}
-  #canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#fff}
+#canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.header{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(10,10,15,.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem;color:var(--a,#00d4ff)}
+.logo svg{width:22px;height:22px}
+.nav{display:flex;gap:4px;align-items:center}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,.45);font-size:.85rem;font-weight:600;padding:8px 18px;border-radius:10px;cursor:pointer;transition:all .3s;font-family:inherit}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,.04)}
+.track{display:flex;height:100vh;will-change:transform}
+.slide{flex:0 0 100vw;height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 40px;z-index:1;text-align:center}
+.sc{max-width:750px;z-index:2}
+.sc h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;background:linear-gradient(135deg,#00d4ff,#0066ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+.sc h2{font-size:clamp(2rem,4vw,3.5rem);font-weight:900;margin-bottom:14px}
+.sc p{color:rgba(255,255,255,.45);font-size:1.05rem;margin-bottom:32px;line-height:1.7}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:14px;background:var(--a,#00d4ff);color:#fff;text-decoration:none;font-weight:700;font-size:1rem;border:none;cursor:pointer;font-family:inherit;transition:all .3s;box-shadow:0 8px 30px rgba(0,212,255,.15)}
+.btn:hover{transform:translateY(-4px)}
+.grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.gcard{width:120px;padding:18px 12px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);text-align:center;cursor:pointer;transition:all .4s;color:rgba(255,255,255,.45)}
+.gcard:hover{transform:translateY(-8px) scale(1.06);background:rgba(255,255,255,.06);color:#fff;box-shadow:0 20px 50px rgba(0,212,255,.1)}
+.gcard .ic{font-size:1.6rem;display:block;margin-bottom:6px}
+.gcard .nm{font-size:.72rem;font-weight:700}
+.counter{display:flex;gap:40px;justify-content:center;margin-bottom:28px;flex-wrap:wrap}
+.c-item{text-align:center}
+.c-item .n{font-size:2.5rem;font-weight:900;color:var(--a,#00d4ff)}
+.c-item .l{font-size:.78rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1px}
+.progress{position:fixed;bottom:28px;left:10%;right:10%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;z-index:50}
+.progress-fill{height:100%;width:0%;background:var(--a,#00d4ff);border-radius:2px}
+.dots{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:14px}
+.dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:all .4s}
+.dot.active{background:var(--a,#00d4ff);border-color:var(--a,#00d4ff);transform:scale(1.5)}
 
-  /* HEADER */
-  .header{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(10,10,15,.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);transition:border-color .6s}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem}
-  .logo svg{width:22px;height:22px}
-  .nav{display:flex;gap:4px;align-items:center}
-  .nav-btn{background:none;border:none;color:var(--text-dim);font-family:var(--font);font-size:.85rem;font-weight:600;padding:8px 18px;border-radius:10px;cursor:pointer;transition:all .3s}
-  .nav-btn:hover{color:var(--text);background:rgba(255,255,255,.04)}
-  .dropdown{position:relative}
-  .dropdown-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:200px;background:var(--bg);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .3s;z-index:200;backdrop-filter:blur(20px)}
-  .dropdown.open .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)}
-  .dropdown-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;color:var(--text-dim);font-size:.85rem;font-weight:500;transition:all .25s;background:none;border:none;width:100%;font-family:var(--font);text-align:left}
-  .dropdown-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
-  .dropdown-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .back-btn{background:none;border:none;color:var(--text-dim);font-family:var(--font);font-size:.85rem;font-weight:600;padding:8px 18px;border-radius:10px;cursor:pointer;transition:all .3s;display:none}
-  .back-btn:hover{color:var(--text);background:rgba(255,255,255,.04)}
-  .back-btn.show{display:inline-flex;align-items:center;gap:6px}
-
-  /* TRACK (main) */
-  .track{display:flex;height:100vh;will-change:transform}
-  .slide{flex:0 0 100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px 60px;position:relative;z-index:1}
-  .slide-content{position:relative;z-index:2;text-align:center;max-width:780px}
-  .slide h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.1;margin-bottom:16px}
-  .slide h2{font-size:clamp(2rem,4vw,3.5rem);font-weight:900;margin-bottom:14px}
-  .slide p{font-size:1.05rem;color:var(--text-dim);margin-bottom:32px;line-height:1.7;max-width:600px;margin-left:auto;margin-right:auto}
-  .gtext{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% 200%;animation:grad 4s ease infinite}
-  @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-  .btn{display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:14px;background:var(--accent-grad);color:#fff;text-decoration:none;font-weight:700;font-size:1rem;transition:all .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 30px var(--glow);border:none;cursor:pointer;font-family:var(--font)}
-  .btn:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 16px 50px var(--glow)}
-  .grid{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
-  .gcard{width:120px;padding:18px 12px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);text-align:center;cursor:pointer;transition:all .4s cubic-bezier(.34,1.56,.64,1);color:var(--text-dim)}
-  .gcard:hover{transform:translateY(-8px) scale(1.06);background:rgba(255,255,255,.06);border-color:var(--accent);color:var(--text);box-shadow:0 20px 50px var(--glow)}
-  .gcard .ic{font-size:1.6rem;display:block;margin-bottom:6px}
-  .gcard .nm{font-size:.72rem;font-weight:700;display:block}
-  .counter{display:flex;gap:40px;flex-wrap:wrap;justify-content:center;margin-bottom:28px}
-  .c-item{text-align:center}
-  .c-item .n{font-size:2.5rem;font-weight:900;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .c-item .l{font-size:.78rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
-  .progress{position:fixed;bottom:28px;left:10%;right:10%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;z-index:50}
-  .progress-fill{height:100%;width:0%;background:var(--accent-grad);border-radius:2px}
-  .dots{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:14px}
-  .dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:all .5s cubic-bezier(.34,1.56,.64,1);background:transparent}
-  .dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.5);box-shadow:0 0 24px var(--glow)}
-
-  /* === GAME VIEW (replaces main view) === */
-  .game-view{position:fixed;inset:0;z-index:150;background:var(--bg);opacity:0;visibility:hidden;transition:all .6s cubic-bezier(.22,1,.36,1)}
-  .game-view.open{opacity:1;visibility:visible}
-  .gv-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:.4;transition:opacity .8s;background-color:var(--bg)}
-  .gv-bg-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 0%,rgba(10,10,15,.7) 50%,var(--bg) 100%)}
-  .gv-track{display:flex;height:100vh;will-change:transform;position:relative;z-index:2}
-  .gv-slide{flex:0 0 100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px 60px;position:relative}
-  .gv-slide .sc{position:relative;z-index:2;text-align:center;max-width:750px}
-  .gv-slide h2{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;margin-bottom:12px}
-  .gv-slide p{color:var(--text-dim);font-size:.95rem;line-height:1.7;margin-bottom:16px;max-width:650px;margin-left:auto;margin-right:auto}
-  .gv-slide h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
-  .gv-slide ul{list-style:none;text-align:left;max-width:550px;margin:0 auto}
-  .gv-slide ul li{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text-dim);font-size:.9rem;display:flex;gap:10px}
-  .gv-slide ul li:last-child{border:none}
-  .gv-slide ul li strong{color:var(--text);min-width:130px;font-family:monospace;font-size:.85rem}
-  .gv-slide .gk{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;max-width:600px;margin:0 auto}
-  .gv-slide .gk-item{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 16px;text-align:left}
-  .gv-slide .gk-item .key{font-weight:700;color:var(--accent);font-family:monospace;font-size:.85rem}
-  .gv-slide .gk-item .desc{font-size:.8rem;color:var(--text-dim);margin-top:2px}
-
-  .gv-progress{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:55;display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.5);padding:8px 16px;border-radius:30px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.06)}
-  .gv-dot{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:all .4s;background:transparent}
-  .gv-dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.3)}
-  .gv-close{position:fixed;top:20px;left:20px;z-index:160;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);color:var(--text);width:44px;height:44px;border-radius:12px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all .3s;backdrop-filter:blur(10px);border-color:var(--accent);color:var(--accent)}
-  .gv-close:hover{background:rgba(255,255,255,.1)}
-
-  @media(max-width:640px){
-    .slide,.gv-slide{padding:60px 20px 40px}
-    .gcard{width:90px;padding:14px 8px}
-    .gcard .ic{font-size:1.3rem}
-    .header{padding:0 16px}
-    .nav-btn{padding:6px 12px;font-size:.8rem}
-    .gv-slide ul li{flex-direction:column;gap:2px}
-    .gv-slide ul li strong{min-width:auto}
-    .gk{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
-    .gv-progress{font-size:.75rem;padding:6px 12px}
-  }
+/* Game overlay */
+.go{position:fixed;inset:0;z-index:150;background:#0a0a0f;opacity:0;visibility:hidden;transition:all .6s}
+.go.open{opacity:1;visibility:visible}
+.go-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:.3}
+.go-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 0%,rgba(10,10,15,.7) 50%,#0a0a0f 100%)}
+.go-back{position:fixed;top:20px;left:20px;z-index:160;background:rgba(255,255,255,.05);border:1px solid var(--a,#00d4ff);color:var(--a,#00d4ff);width:44px;height:44px;border-radius:12px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+.go-back:hover{background:rgba(255,255,255,.1)}
+.gt{display:flex;height:100vh;will-change:transform;position:relative;z-index:2}
+.gs{flex:0 0 100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center}
+.gs .sc{max-width:700px}
+.gs h2{font-size:clamp(1.5rem,3vw,2.5rem);font-weight:900;margin-bottom:10px}
+.gs p{color:rgba(255,255,255,.45);font-size:.9rem;line-height:1.7;margin-bottom:14px;max-width:600px}
+.gs ul{list-style:none;max-width:500px;margin:0 auto}
+.gs li{padding:6px 0;color:rgba(255,255,255,.45);font-size:.85rem;display:flex;gap:10px;align-items:center}
+.gs li strong{color:#fff;min-width:120px;font-family:monospace;font-size:.82rem}
+.gp{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:55;display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.5);padding:8px 20px;border-radius:30px;border:1px solid rgba(255,255,255,.06)}
+.gd{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:all .4s}
+.gd.active{background:var(--a,#00d4ff);border-color:var(--a,#00d4ff);transform:scale(1.3)}
+@media(max-width:640px){
+  .slide,.gs{padding:60px 20px}
+  .gcard{width:90px;padding:14px 8px}
+  .gcard .ic{font-size:1.3rem}
+  .header{padding:0 16px}
+  .nav-btn{padding:6px 12px;font-size:.8rem}
+  .gs li{flex-direction:column;gap:2px}
+  .gs li strong{min-width:auto}
+}
 </style>
-<link rel="preload" as="image" href="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/library_hero.jpg">
-<link rel="preload" as="image" href="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/library_hero.jpg">
-<link rel="preload" as="image" href="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/578080/library_hero.jpg">
-<link rel="preload" as="image" href="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/381210/library_hero.jpg">
-<link rel="preload" as="image" href="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/252490/library_hero.jpg">
-<link rel="preload" as="image" href="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/library_hero.jpg">
-<link rel="preload" as="image" href="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/271590/library_hero.jpg">
-<style>.gv-bg{background-size:cover;background-position:center;opacity:.4;transition:opacity .6s;background-color:var(--bg)}.gv-bg.loaded{opacity:.4}</style>
+</head>
 <body>
 <canvas id="canvas"></canvas>
-
 <header class="header">
-  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="22" height="22"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> GameGuide</div>
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>GameGuide</div>
   <div class="nav">
     <button class="nav-btn active" onclick="goTo(0)">Гайды</button>
-    <div class="dropdown" id="gamesDropdown">
-      <button class="nav-btn" id="gamesBtn">Игры ▾</button>
-      <div class="dropdown-menu" id="dropdownMenu"></div>
-    </div>
+    <button class="nav-btn" onclick="goTo(1)">Игры</button>
     <button class="nav-btn" onclick="goTo(2)">О проекте</button>
-    <button class="back-btn" id="backBtn" onclick="closeGameView()">← Назад</button>
   </div>
 </header>
 
-<!-- MAIN TRACK -->
 <div class="track" id="track">
-  <section class="slide"><div class="slide-content"><h1><span class="gtext">Гайды по играм</span></h1><p>CS2, Dota 2, Minecraft, Fortnite, PUBG, Overwatch, DBD, Rust, Valorant, RDR 2, GTA V, World of Tanks — тактики, бинды, оптимизация</p><button class="btn" onclick="goTo(1)">🎮 Выбрать игру →</button></div></section>
-  <section class="slide"><div class="slide-content"><h2>Все игры</h2><p>Нажми на игру — откроется полный гайд с тематическим фоном</p><div class="grid" id="gameGrid"></div></div></section>
-  <section class="slide"><div class="slide-content"><h2>О проекте</h2><div class="counter"><div class="c-item"><div class="n">12</div><div class="l">Игр</div></div><div class="c-item"><div class="n">130+</div><div class="l">Гайдов</div></div><div class="c-item"><div class="n">∞</div><div class="l">Пользы</div></div></div><p style="margin-bottom:16px">Автор: <strong>Skarry</strong> — Июнь 2026</p><p>Все гайды бесплатно, без скачивания, навсегда</p><div style="margin-top:20px"><a href="https://funpay.com/users/17178819/" target="_blank" class="btn">💎 Поддержать автора →</a></div></div></section>
+  <section class="slide"><div class="sc"><h1>Гайды по играм</h1><p>CS2, Dota 2, Minecraft, Fortnite, PUBG, Overwatch, DBD, Rust, Valorant, RDR 2, GTA V, World of Tanks<br>Тактики, бинды, оптимизация — всё в одном месте</p><button class="btn" onclick="goTo(1)">🎮 Выбрать игру</button></div></section>
+  <section class="slide"><div class="sc"><h2>Все игры</h2><p>Нажми на игру — откроется полный гайд</p><div class="grid" id="gameGrid"></div></div></section>
+  <section class="slide"><div class="sc"><h2>О проекте</h2><div class="counter"><div class="c-item"><div class="n" id="gameCount">12</div><div class="l">Игр</div></div><div class="c-item"><div class="n">130+</div><div class="l">Гайдов</div></div></div><p style="margin-bottom:16px">Автор: <strong>Skarry</strong> — Июнь 2026</p><a href="https://funpay.com/users/17178819/" target="_blank" class="btn">💎 Поддержать автора</a></div></section>
 </div>
 
 <div class="progress"><div class="progress-fill" id="pfill"></div></div>
 <div class="dots" id="dots"><div class="dot active" data-i="0"></div><div class="dot" data-i="1"></div><div class="dot" data-i="2"></div></div>
 
-<!-- GAME VIEW -->
-<div class="game-view" id="gameView">
-  <div class="gv-bg" id="gvBg"></div>
-  <div class="gv-bg-overlay"></div>
-  <div class="gv-close" onclick="closeGameView()">✕</div>
-  <div class="gv-track" id="gvTrack"></div>
-  <div class="gv-progress" id="gvProgress"></div>
+<!-- Game overlay -->
+<div class="go" id="go">
+  <div class="go-bg" id="goBg"></div>
+  <div class="go-overlay"></div>
+  <div class="go-back" onclick="closeGame()">✕</div>
+  <div class="gt" id="gt"></div>
+  <div class="gp" id="gp"></div>
 </div>
 
 <script>
-  // === PALETTES ===
-  const pal={default:{a:'#00d4ff',a2:'#0066ff'},cs2:{a:'#d4a017',a2:'#8b6914'},dota:{a:'#ff6b35',a2:'#00d4aa'},minecraft:{a:'#5b8c3e',a2:'#3a6b1e'},fortnite:{a:'#8a2be2',a2:'#ff6ec7'},pubg:{a:'#d4a017',a2:'#1a2744'},overwatch:{a:'#f89b1c',a2:'#ff6a00'},dbd:{a:'#c0392b',a2:'#2c3e50'},rust:{a:'#c0392b',a2:'#7b241c'},valorant:{a:'#ff4655',a2:'#bd1522'},rdr2:{a:'#8b0000',a2:'#4a0000'},gtav:{a:'#2c82c9',a2:'#1a5276'},wot:{a:'#c7a022',a2:'#8b6914'}};
-  function applyP(g){const p=pal[g]||pal.default;const r=document.documentElement;r.style.setProperty('--accent',p.a);r.style.setProperty('--accent2',p.a2);r.style.setProperty('--glow',p.a+'33');r.style.setProperty('--accent-grad','linear-gradient(135deg,'+p.a+','+p.a2+')')}
+  let a = '#00d4ff', a2 = '#0066ff';
+  function setC(c,c2){a=c||'#00d4ff';a2=c2||'#0066ff';let r=document.documentElement;r.style.setProperty('--a',a);r.style.setProperty('--a2',a2)}
 
-  // === GUIDE DATA ===
-const guides={
-    cs2:{n:'CS2',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/library_hero.jpg',
-      g:[{t:'🎯 Спрей-контроль',d:'Паттерн AK-47: первые 5 пуль строго вверх, потом диагональ вправо-влево. M4A4/M4A1-S — плавнее. Тренируй spray transfer по 10 мин/день в Recoil Master. USP-S и Glock — только в голову. Deagle — пауза 0.5 сек. Desert Eagle — стенка от 5 метров один шот.',k:[['AK-47','вверх 5 → диагональ'],['M4','плавный спрей'],['Deagle','0.5 сек пауза'],['Spray Transfer','перенос цели'],['USP-S','только в голову']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},
-        {t:'⌨️ Бинды и конфиг',d:'1280×960 stretched (широкие модели врагов). eDPI 800-1200. Прыжок на колёсико (mwheeldown) для bhop. Autoexec: cl_crosshaircolor 5, sensitivity 2.0, viewmodel_preset 1, volume 0.1, cl_radar_scale 0.7. Nade binds через alias. Бинды для покупки: F1 — buy ak/m4, F2 — buy awp, F3 — buy armour+kit.',k:[['1280×960','stretched'],['eDPI','800-1200'],['Jump','mwheeldown'],['Crosshair','cl_crosshaircolor 5'],['Buy binds','F1 ak, F2 awp']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},
-        {t:'⚡ Оптимизация',d:'Видео: всё LOW, Shadows LOW/VERY LOW, MSAA OFF, Texture Streaming OFF, HDR OFF. NVIDIA: Low Latency Mode ON (Ultra), Power MAX. Launch options: -novid -high -noaafonts -threads 8 -tickrate 128 +fps_max 0. Монитор 144Hz+ обязателен. Отключи игровой режим Windows и Game Bar.',k:[['Shadows','LOW/VERY LOW'],['NVIDIA','Low Latency ULTRA'],['Launch','-novid -threads 8'],['FPS','+fps_max 0'],['144Hz','обязателен']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},
-        {t:'🗺️ Карты и тактика',d:'Mirage: контроль mid — ключ к победе, смокай window/jungle/connector. Inferno: bananas — без смока не суйся, играй через molotov. Dust 2: A long (смок от соперника) + B tunnels (flash через стену). Nuke: верх/низ — разные тактики. Overpass: контролируй коннектор и bathrooms. Ancient: cave через smoke.',k:[['Mirage','mid контроль'],['Inferno','bananas смок'],['Dust 2','A long + B tunnels'],['Nuke','верх vs низ'],['Overpass','коннектор']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},{t:"🎮 Герои/роли подробно",d:"Разбери каждого героя или роль в деталях. Изучи их сильные и слабые стороны. В каждой роли есть свои контр-пики и лучшие союзники. Тренируйся в кастомных играх. Смотри про-матчи и гайды на YouTube. Запоминай ключевые тайминги и ротации.",k:[["Роли","изучи каждую"],["Сильные стороны","запомни"],["Контр-пики","противники"],["Про-матчи","смотри"],["Тренировки","кастомки"]]}
-,{t:"🏆 Продвинутые механики",d:"Овладей продвинутыми техниками: анимация-канселы, реджекты, микро-контроль. Тренируй мышечную память. Учись предсказывать действия противника. Используй бинды для быстрых действий. Настрой интерфейс под себя. Играй с чувством темпа — знай когда агрессировать, а когда отступать.",k:[["Механики","продвинутые"],["Мышечная память","тренируй"],["Темп","агрессия/отход"],["Интерфейс","настрой"],["Бинды","оптимизируй"]]}
-,{t:"💡 Лайфхаки и секреты",d:"Используй хитрости: неочевидные взаимодействия предметов, баги (не эксплуатируй), скрытые механики. Общайся с командой — инфо решает исход. Следи за обновлениями игры. Изучи экономику (когда байить/сейвить). Знай карту — расположение ресурсов/точек интереса. Не токси — это ухудшает игру.",k:[["Хитрости","интеракции"],["Инфа","общайся"],["Экономика","бай/сейв"],["Карта","ресурсы"],["Не токси","уважай"] ]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-        {t:'💣 Гранаты (натравка)',d:'Заучи 2-3 смока на каждую карту. Pop flash — разрыв в воздухе (не слышно звука), ослепляет на 2-3 сек. HE — 98 dmg в пике, кидай в точки закупа. Molotov — 40 dps, выжигает углы на 7 сек. Decoy — имитирует звук стрельбы, используй для отвлечения. Кайт (kit) — покупай всегда, если остались деньги.',k:[['Smoke','заучи 2-3 на карту'],['Pop flash','разрыв в воздухе'],['HE','98 dmg'],['Molotov','40 dps 7 сек'],['Kit','покупай всегда']]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-        {t:'🏆 Про-советы',d:'Crosshair placement — держи прицел на уровне головы, не смотри в пол. Peek — wide swing (широкий) или shoulder peek (плечом). Trade kill — если убивают тиммейта, добивай врага. Учись стрелять через дым (по звуку шагов). Коммуникация — давай чёткую инфу: «A site 2, один low HP».',k:[['Crosshair','уровень головы'],['Peek','wide/shoulder'],['Trade kill','добивай врага'],['Через дым','по звуку'],['Инфа','чётко: кто+где+HP']]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-    dota:{n:'Dota 2',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/library_hero.jpg',
-      g:[{t:'🛡️ Саппорт',d:'Бебиситинг — защита керри на линии, спасай его ценой своей жизни. Харасс — бей врага постоянно, заставь тратить регены. Пуллинг — отводи крипов к нейтралам на :55 секунде (вернись в :42 для стака к :55). Денай — добивай своих крипов ниже 50% ХП. Старт: 2 Observer Wards (1 мидеру), 1 Courier, Tango, Healing Salve, Clarity, 2-3 Iron Branch. На 3 минуте апгрейд курьера до летающего.',k:[['Пуллинг',':55 секунд'],['Денай','< 50% ХП'],['Варды','на возвышенностях'],['Старт','2 варда + курьер'],['Апгрейд','курьер на 3 мин']]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-        {t:'⚔️ Керри',d:'Идеал фарма — 80+ крипов к 10 минуте. В сложной линии — 2-3/мин без смертей. Тренируй ластхит с ботами. Анимация атаки: Sniper/Clinkz — медленные (бей раньше), Sniper — лучшая. Safe Lane для керри. Контр-пики керри: AA (Silencer/Riki/Doom против), Bane (Silencer/Doom/Riki), Riki, Ursa, Storm, OD.',k:[['Фарм','80+ к 10 мин'],['Ластхит','тренировка с ботами'],['Safe Lane','для керри'],['Контр-пики','AA, Riki, Ursa'],['Анимация','Drow медл, Sniper быстр']]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-        {t:'⚡ Оптимизация',d:'Launch: -novid -high -noaafonts -novr -nojoy +fps_max 144 -threads 8 +map_enable_portrait_worlds 0 -prewarm -nod3d9ex -noipx. Vulkan для новых видеокарт (AMD/NVIDIA), DX11 для старых. Autoexec.cfg: 60+ команд (dota_portrait_animate 0, r_ssao 0, r_grass_quality 0, dota_cheap_water 1, r_deferred_additive_pass 0). Minify с GitHub (не банят).',k:[['Launch','-novid -high -threads 8'],['Autoexec','60+ FPS команд'],['Minify','GitHub, не банят'],['Vulkan','для новых карт'],['DX11','для старых ПК']]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-        {t:'🗺️ Расстановки (лайнинг)',d:'2-1-2 — классика: мидер соло, саппорт+керри, второй+оффлейн. 3-1-1 — агрессивный трипл-лайн на харде. 1-1-3 — пассивный трипл на сейф-лейне. Safe lane (низ/верх) — безопасная. Hard lane — тяжёлая. Изучай стаки крипов: на :53-:55 отведи нейтралов и беги на лайн.',k:[['2-1-2','классический'],['3-1-1','трипл хард'],['1-1-3','трипл сейф'],['Safe','низ для сил света'],['Стаки',':53-:55 секунд']]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-        {t:'🛒 Предметы и билды',d:'Саппорт: Force Staff, Glimmer Cape, Aether Lens, Solar Crest. Варды + Sentry + Dust + Smoke — всегда. Керри: Battlefury (фарм), Manta Style (диспелл), Sange&Yasha/BKB (выживание), Butterfly (ловкость), Daedalus (крит). Мидер: Bottle + Wand на старте, Blink+Dagger на инициаторах.',k:[['Саппорт','Force+Glimmer'],['Керри','Battlefury+Manta'],['Мидер','Bottle+Wand'],['Расходники','варды+дым+сентри'],['BKB','обязателен']]},{t:'⚡ Оптимизация игры',d:'В настройках графики выключи всё лишнее: shadows на LOW или OFF, textures на LOW, эффекты OFF. VSync OFF. FPS limit поставь на частоту монитора. Отключи вертикальную синхронизацию. В параметрах запуска (Steam→Свойства) добавь: -novid -high -noaafonts -threads [число ядер]. Поставь производительность выше качества в настройках.',k:[['Shadows','LOW/OFF'],['Textures','LOW'],['VSync','OFF'],['FPS limit','частота монитора'],['Launch','-novid -high -threads']]},
-{t:'🖥️ Оптимизация ПК',d:'Обнови драйвера видеокарты (GeForce Experience/AMD Adrenalin). Отключи Game Bar в Windows. Включи игровой режим. Поставь план питания «Максимальная производительность». В автозагрузке отключи Razer/Logitech/Spotify. Закрой Chrome перед игрой (жрёт RAM). Очисти временные файлы через %temp%. Поставь SSD если играешь с HDD — разница огромна.',k:[['Драйвера','обнови'],['Game Bar','отключи'],['План питания','макс производительность'],['Автозагрузка','почисти'],['SSD','обязателен']]},
-        {t:'🔥 Советы по дракам',d:'На линии: контролируй руну (bounty/water) каждые 2 минуты. Teamfight: не фокусь одного — распределяй урон. Kill priority: сначала саппорты (они дизейблят), потом керри. Рошан: убивайте после 30-40 минут или после хорошей драки. Divine Rapier: покупай только если враг на пороге трона.',k:[['Руна','каждые 2 мин'],['Teamfight','фокус саппортов'],['Рошан','после драки'],['Rapier','если проигрываете'],['Коммуникация','инфа через пинг']]},
-    minecraft:{n:'Minecraft',bg:'',
-      g:[{t:'⛏️ Выживание (день 1-10)',d:'День 1: дерево → верстак → деревянные инструменты → камень (кирка+топор+меч) → уголь 15+ → убежище до ночи. День 2-4: овцы (кровать), коровы (кожа), курицы (перья). Ферма моркови/картошки. День 5-10: копай на Y=11, алмазы → зачаровательный стол. Найди деревню — жители дают лучшие зачарования.',k:[['День 1','камень→уголь→убежище'],['Y=11','алмазный слой'],['Кровать','спавн точка'],['Зачарование','стол+книга'],['Деревня','трейды с жителями']]},
-        {t:'🔧 Фермы и редстоун',d:'Железная: зомби+житель+голем → падение в лаву → железо. Опыт-ферма: спаунер скелетов → вода → воронки. Авто-еда: жители-фермеры + компостер. Тростник: наблюдатель+поршень. Глина: каменщики дают изумруды. Перл-ферма: enderman в ловушку с водой.',k:[['Железо','голем+зомби+житель'],['Опыт','спаунер+вода'],['Еда','жители-фермеры'],['Тростник','наблюдатель+поршень'],['End','перл-ферма']]},
-        {t:'🏗️ Строительство',d:'Палитра: 3-4 блока на стиль + факелы/ковры. Крыши: плиты для плавного скоса. Освещение: факелы под коврами, светокамень под листвой — 0 мобов. Ландшафт: холмы, деревья, кусты, пруд. Детали: лестницы как ставни, заборы как перила.',k:[['Палитра','3-4 блока'],['Крыши','плиты'],['Свет','под коврами'],['Ландшафт','холмы+пруд'],['Детали','лестницы+заборы']]},
-        {t:'⚡ Оптимизация',d:'Java: OptiFine или Sodium+Lithium+Phosphor (Fabric). Render 8-12, Graphics FAST, Smooth Lighting MIN, Particles MIN. RAM: 4-8GB (-Xmx4G). Bedrock: отключи красивые небеса, облака, тени. В настройках: FOV 80-90, Sensitivity 80-100%. Отключи автопрыжок и камеру от тряски.',k:[['OptiFine','Sodium+Fabric'],['Render','8-12'],['RAM','-Xmx4G'],['Bedrock','небеса OFF'],['FOV','80-90']]},
-        {t:'⚔️ PvP советы',d:'CPS: кликай быстро (6+ кликов/сек). Крит-удары: прыгай и бей — +50% урона. Щит: ПКМ вовремя блокирует атаки. Тоти-блок: держи тотем в offhand+F. Hitbox: целься в голову/ноги (криты не работают). Потки: пейте до боя. Уклоняйся от жемчуга и стрел.',k:[['CPS','6+ кликов/сек'],['Криты','прыжок+удар'],['Щит','вовремя ПКМ'],['Тотем','offhand+F'],['Хитбокс','голова/ноги']]},
-        {t:'🏆 Продвинутые техники',d:'Block clutch — поставь блок под себя при падении (shift+ПКМ). MLG water bucket — ведро воды перед приземлением. TNT-пушка: редстоун + TNT + вода. Wither: спавни под землёй (в замкнутом пространстве). Изумрудная ферма: жители-библиотекари покупают бумагу за изумруды.',k:[['Block clutch','ставь блок в воздухе'],['MLG water','ведро воды перед землёй'],['TNT пушка','редстоун+TNT'],['Wither','спавн под землёй'],['Изумруды','бумага→жители→изумруд']]},
-    fortnite:{n:'Fortnite',bg:'',
-      g:[{t:'🔫 Строительство',d:'Wall+Ramp — база. 90-е — вращение+подъём. Туннели — защита. Редакты: окна (шотган+назад), углы (сбоку), тройные (пол+стена+потолок). Creative 15 мин/день. Pro: wall+ramp на двух кнопках мыши. Тренируй crosshair placement — редаки работают когда прицел наведён на край.',k:[['Wall+Ramp','базовый подъём'],['90-е','вращение+подъём'],['Редакты','окна, углы, тройные'],['Creative','15 мин/день'],['Pro','wall+ramp на мышь']]},
-        {t:'⌨️ Бинды',d:'Wall — Q, Ramp — E, Floor — C, Cone — X. Редакт — боковая кнопка. Чувствительность 6-8 @ 800 DPI. Build Mode 1.8x-2.0x. Editing 1.2x-1.5x. Pro: wall Mouse4, ramp Mouse5, floor Q. Отключи toggle sprint, включи hold для редакта.',k:[['Wall','Q/Mouse4'],['Ramp','E/Mouse5'],['Floor','C'],['Build Mode','1.8x-2.0x'],['Редакт','боковая кнопка']]},
-        {t:'⚡ Настройки',d:'View Distance EPIC, Textures LOW, Shadows OFF, Post Processing LOW. 3D Resolution 100%. VSync OFF, FPS Limit 240. NVIDIA Reflex LOW LATENCY. 3D Audio ON. Отключи голосовой чат. Чувствительность прицела 6-8, строительства 1.8, редактирования 1.3.',k:[['View Distance','EPIC'],['Textures','LOW'],['3D Resolution','100%'],['Reflex','LOW LATENCY'],['FPS','240']]},
-        {t:'🎯 Оружие и мета',d:'Следи за обновлениями. Штурмовая MK — стабильный спрей. Thunder Pump — мощный шотган. Пистолет с красной точкой — точный на средней. Shockwave Grenades — для отхода. Med Kits + Chug Splash — обязательно. Подбирай мифические предметы с боссов.',k:[['MK','штурмовая'],['Thunder Pump','дробовик'],['Red Dot','пистолет точный'],['Shockwave','отход'],['Med Kits','обязательны']]},
-        {t:'🗺️ Стратегия победы',d:'Выбирай точки с 2-3 сундуками вдали от маршрута автобуса. Следи за штормом — начинай rotate за 30-40 сек. В конце — не строй высокие башни. Держись низко, используй деревья/камни. Слушай шаги и стрельбу. В топ-5 — у тебя должен быть полный щит и медики.',k:[['Landing','тихие точки'],['Storm','rotate заранее'],['End game','не строй башни'],['Sound','шаги+стрельба'],['Топ-5','полный щит']]},
-        {t:'🏆 Продвинутые техники',d:'Box fighting — бой в коробках (4 стены+пол+лестница). Triple edit — пол+стена+потолок за один заход. Wall-taking — укради стену врага редактируя. Cone jump — запрыгни на конус для высоты. Phase — пройди сквозь свою стену через редакт в момент столкновения.',k:[['Box fight','коробки'],['Triple edit','пол+стена+потолок'],['Wall-taking','укради стену'],['Cone jump','высота'],['Phase','сквозь стену']]},
-    pubg:{n:'PUBG',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/578080/library_hero.jpg',
-      g:[{t:'🪂 Тактика лендинга',d:'Прыгай под углом 45° к зданиям для макс дистанции. Приземляйся быстро — держи Shift вниз. Выбирай точки с 3+ зданиями вдали от линии самолёта. Собирай по приоритету: шлем+броня (1-2-3), рюкзак, медики (first aid + бинты + энергетик/таблетки), оружие (M416/Beryl/SLR). Smoke grenade — обязательно.',k:[['Угол','45° для дальноты'],['Лендинг','3+ здания'],['Приоритет','шлем+броня+оружие'],['Smoke','обязательна'],['Energy','энергетик+таблетки']]},
-        {t:'🔫 Оружие и модули',d:'M416 — стабильный AR (компенсатор + v-образная рукоятка + 3x/4x). Beryl M762 — урон выше, отдача сложнее (компенсатор + половинная рукоятка). Mini-14/SLR — DMR для дальних. AWM — 1 шот в голову любой шлем. Vector/MP5K — для закрытых. Tommy Gun — магазин 50, быстрый.',k:[['M416','стабильный+3x'],['Beryl','урон+отдача'],['Mini-14','DMR дальний'],['AWM','1 шот голова'],['Vector','закрытые']]},
-        {t:'⌨️ Бинды',d:'Q/E — lean, Z — лечь, C — присесть, B — режим стрельбы, V — 1/3 лицо. Ctrl+1-4 — сиденья. Mouse4 — smoke, Mouse5 — flash. R — перезарядка. F — взаимодействие. Scroll — смена оружия. Alt — осмотреться (free look). Бинд «фонарик» на T.',k:[['Q/E','lean'],['Z/C','лечь/присесть'],['B','режим огня'],['V','камера FPS/TPS'],['Alt','осмотреться']]},
-        {t:'⚡ Настройки',d:'Screen Scale 100, AA LOW, Post-Processing VERY LOW, Shadows VERY LOW, Textures MEDIUM. FOV 90-100. NVIDIA: Digital Vibrance 70-80% (ярче враги). VSync OFF. Чувствительность 35-45 общая, 2x — 35, 4x — 30, 6x/8x — 25. Звук: HRTF ON (позиционирование).',k:[['Screen Scale','100%'],['Digital Vibrance','70-80%'],['Post-Processing','VERY LOW'],['Shadows','VERY LOW'],['HRTF','звук ON']]},
-        {t:'🗺️ Карты и ротация',d:'Erangel (8×8): ротация по краю зоны, транспорт нужен. Miramar (8×8): горы — ищи машину у дорог. Sanhok (4×4): пешком, плотные джунгли — играй от укрытий. Vikendi (6×6): следы на снегу. Ротация: двигайся вдоль края зоны, не выбегай в открытую без смока.',k:[['Erangel','транспорт+край'],['Miramar','машина у дорог'],['Sanhok','пешком+укрытия'],['Vikendi','следы на снегу'],['Ротация','вдоль края зоны']]},
-        {t:'🏆 Советы по выживанию',d:'Не стреляй если не уверен в убийстве — звук привлекает. Смени позицию после каждого убийства. В конце круга — мало укрытий, используй смоки. Lean за углом во время стрельбы. Не беги по открытому полю без смока. В топ-5 — у тебя должен быть полный хп и 3+ смока.',k:[['Звук','привлекает внимание'],['Смена','после каждого фрага'],['End game','смоки обязательны'],['Lean','стреляй из-за угла'],['Топ-5','полный HP+смоки']]},
-    overwatch:{n:'Overwatch',bg:'',
-      g:[{t:'🎯 Роли и контр-пики',d:'Tank: Reinhardt (щит), Winston (диверсант), D.Va (защита). Damage: Soldier 76 (база), Tracer (мобильность), Widowmaker (снайпер), Reaper(ближний). Support: Ana (хил+антихил), Mercy (рейз), Kiriko (хил+урон), Lucio (скорость). Против Winston — Reaper/Bastion. Против Tracer — McCree/Brigitte. Против Pharah — Widow/Soldier.',k:[['Tank','щит+пространство'],['Damage','урон+фраги'],['Support','хил+бафф'],['Против Winston','Reaper/Bastion'],['Против Pharah','Widow/Soldier']]},
-        {t:'⌨️ Бинды',d:'Q — ульт, Shift — способность 1, E — способность 2, R — перезарядка. Scroll — смена оружия. Чувствительность 4-8 @ 800 DPI (про-стандарт). FOV 103. Crosshair: короткий зелёный (size 5, gap 3) или розовый. Герои с 2+ режимами (Mercy) — бинд на Scroll.',k:[['Q','ультимейт'],['Shift','способность 1'],['E','способность 2'],['FOV','103 (макс)'],['Crosshair','зелёный']]},
-        {t:'⚡ Настройки',d:'Render Scale 100%, Graphics LOW, Texture LOW, Shadows LOW, Fog LOW. NVIDIA: Low Latency ON, Power MAX. VSync OFF, тройная буферизация OFF. 144Hz обязательно. Звук: Dolby Atmos. Отключи звук музыки в главном меню.',k:[['Render Scale','100%'],['Shadows','LOW'],['NVIDIA','Low Latency ON'],['144Hz','обязателен'],['Звук','Dolby Atmos']]},
-        {t:'🏆 Советы для Competitive',d:'2-2-2 состав — стандарт. Counter-pick: если тебя контрят — меняйся. Ульты: комбинируй (Zarya+Reaper, Ana+Genji, Mercy+Bastion). Перед смертью напиши в чат угрозу. Не спамь «I need healing» когда сзади и хил. Смотри про-матчи на YouTube для изучения тактик.',k:[['Состав','2-2-2'],['Ульты','комбинируй'],['Counter','меняйся'],['Инфа','пиши угрозу'],['Про','смотри матчи']]},
-        {t:'💊 Хилинг и выживание',d:'Хилер: не лечи одного — распределяй хил. Приоритет: Tank (держит фронт) → DPS (делает фраги) → второй хил. Уворачивайся от атак: прыгай+приседай (AD strafe). Знай расположение аптечек на карте. Не стой на открытом — используй укрытия. Следи за ультой врага — готовь защиту.',k:[['Хил','распределяй'],['Приоритет','Tank→DPS→Healer'],['Уворот','AD+прыжок+присед'],['Аптечки','запомни точки'],['Ульты врага','готовь защиту']]},
-        {t:'🔥 Продвинутые механики',d:'Animation cancel — отмена анимации (Reaper: мели + shift). Rocket jump — прыжок с ракетницы (Soldier, Pharah). Super jump (Mercy) — прыжок с guardian angel + crouch. Bhop — bunny hop с Lucio (колёсико). Wallride (Lucio) — скользи по стенам без потери скорости.',k:[['Animation cancel','Reaper meli'],['Rocket jump','Soldier+Pharah'],['Super jump','Mercy GA+crouch'],['Bhop','Lucio колесо'],['Wallride','Lucio стены']]},
-    dbd:{n:'Dead by Daylight',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/381210/library_hero.jpg',
-      g:[{t:'🔪 Выживший (Survivor)',d:'Loop — крути паллеты+окна. Сбрасывай паллету раньше чем поздно. Dead Hard (Дэвид) — рывок с неуязвимостью 0.5 сек. Borrowed Time (Билл) — immunity 10-20 сек после снятия. Windows of Opportunity (Кейт) — подсветка паллет. Kindred — видишь киллера когда кто-то на крюке. Sprint Burst (Мег) — 150% скорости.',k:[['Dead Hard','уворот 0.5 сек'],['Borrowed Time','спасение'],['Windows','паллеты подсвечены'],['Loop','крути паллеты'],['Sprint Burst','150% скорость']]},
-        {t:'🎃 Киллер (Killer)',d:'Патрулируй генераторы по кругу. Не трать >30-40 сек на погоню. Proxy camp: отойди на 20м от крюка. Corrupt Intervention — блок 3 дальних генов на 120 сек. Pop Goes the Weasel — сломай генератор -30% прогресс. NOED — становишься опаснее в конце. Surge — генераторы в радиусе теряют 8%.',k:[['Corrupt','блок генов 120 сек'],['Pop Goes','-30% прогресс'],['NOED','опасность в конце'],['Proxy camp','20м от крюка'],['Surge','-8% в радиусе']]},
-        {t:'⚡ Настройки',d:'FOV 103 (макс). Graphics LOW, Shadows LOW, AA OFF, Texture LOW. VSync OFF. Чувствительность 50-70. Отключи head bob (блуждание). Звук за выжившего: громко шаги+хиты. За киллера: громко генераторы. NVIDIA: Low Latency ON.',k:[['FOV','103 (макс)'],['Shadows','LOW'],['Head bob','OFF'],['Звук','шаги/генераторы'],['NVIDIA','Low Latency ON']]},
-        {t:'🗺️ Карты для выжившего',d:'Macmillan Estate — много паллет и зданий. Coldwind Farm — кукуруза, киллер тебя тоже видит. Autohaven Wreckers — машины для кругов. Lery Memorial — узкие коридоры, stealth киллеры опасны. Haddonfield — заборы для loop. Изучи спауны генераторов.',k:[['Macmillan','много паллет'],['Coldwind','кукуруза'],['Autohaven','машины'],['Lery','коридоры'],['Haddonfield','заборы']]},
-        {t:'🏆 Перки и сборки',d:'Выживший: Dead Hard + Borrowed Time + Windows + Kindred (сборка новичка). Универсал: Sprint Burst + Prove Thyself + Resilience. Киллер: Corrupt + Pop + NOED + Surge (сборка урона). Инфо-сборка: BBQ + Discordance + Thrilling Tremors.',k:[['Survivor','Dead+Borrowed+Window'],['Киллер','Corrupt+Pop+NOED'],['Инфо','BBQ+Discordance'],['Loop','паллеты+окна'],['Патруль','круг по генам']]},
-        {t:'💡 Советы и лайфхаки',d:'Выживший: приседай у кустов — киллер может не заметить. Киллер: сломай паллету если она уже сброшена — уберешь укрытие. Spin-уворот: крутись вокруг киллера когда он атакует. Задержи дыхание (киллер) — не дыши когда рядом в шкафу.',k:[['Кусты','приседай'],['Сломай','паллету убирай'],['Spin','уворот вокруг'],['Шкаф','не дыши'],['Атака','spin уворачивайся']]},
-    rust:{n:'Rust',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/252490/library_hero.jpg',
-      g:[{t:'🦀 Первый день',d:'200 камня+100 дерева→каменный топор+кирка. Найди реку→плот в тихий район. База 2×1 из камня. Tool Cupboard (TC) в центре, запри. Еда: охота (олени/кабаны) или ягоды (красные—яд, жёлтые/синие—еда). Найди воду — пей из реки/озера (заразишься), лучше сделай биотуалет для чистой воды.',k:[['Старт','200+100 камень+дерево'],['База','2×1'],['TC','в центре'],['Еда','охота/ягоды'],['Вода','туалет']]},
-        {t:'🏠 База и рейдозащита',d:'Honeycomb — внешние стены от рейда. Дверь: железо+code lock. Двойная дверь в тамбуре. Окна с решётками. Shotgun trap у входа. TC: заливай бензин. Укрепляй до металла (2 уровень). Не храни всё в одном месте — используй внешние шкафы. Auto turrets у входа.',k:[['Honeycomb','внешние стены'],['Code lock','не ключ'],['TC','бензин'],['Turrets','авто турели'],['Металл','укрепи до 2ур']]},
-        {t:'🔫 PvP и оружие',d:'SAP Pistol+Crossbow — базовый набор. Thompson Custom — первый SMG. AK-47 — топ урон, сложный спрей. Satchel charges — дёшево для рейда. C4 — дорого, 2 шт на метал стену. Атака: из засады, зигзагом. Играй от укрытий — не выбегай в поле. Радиация: противогаз+таблетки для красных зон.',k:[['SAP+Crossbow','базовый'],['AK-47','топ урон'],['Satchel','дёшево'],['C4','мощно'],['Радиация','противогаз']]},
-        {t:'⚡ Оптимизация',d:'Всё LOW: Draw Distance 500-1000, Shadows OFF, Water/Land LOW, Reflections OFF, Grass DISABLED. FOV 90-100. Launch: -high -window-mode exclusive -maxMem=8192. FPS cap = частота монитора. В автозагрузке отключи всё лишнее. Почисти файлы кэша игры раз в месяц.',k:[['Draw Distance','500-1000'],['Shadows','OFF'],['Grass','DISABLED'],['Launch','-high -maxMem=8192'],['Кэш','чисти раз в месяц']]},
-        {t:'🗺️ Карта и точки',d:'Outpost — нейтральная зона (не стрелять!), торгуй. Bandit Camp — грабить можно, но не в 200м от казино. Military Tunnel — лучший лут, опаснейшая точка. Заброшки (сбросы) — контейнеры с припасами. Отметь на карте безопасные маршруты. Изучи расположение дорог и рек.',k:[['Outpost','нейтрал+торговля'],['Bandit Camp','+200м от казино'],['Military Tunnel','топ лут'],['Сбросы','контейнеры'],['Маршруты','безопасные пути']]},
-        {t:'🔥 Крафт и ресурсы',d:'Первым делом: исследовательский стол (tech tree). Изучи: камень→металл→металл 2ур→серный порох. Серные копай на горах (желтые камни). Для рейда: 2000 серы → 4 satchel на метал стену. Для C4: 4000 серы. Металлолом: разбирай найденные предметы. Ткань: из конопли (белая, растёт у воды).',k:[['Tech tree','сразу изучай'],['Сера','жёлтые камни'],['Satchel','2000 серы'],['C4','4000 серы'],['Ткань','конопля у воды']]},
-    valorant:{n:'Valorant',bg:'',
-      g:[{t:'🔫 Агенты',d:'Duelists: Jett (агрессия+mобильность), Phoenix (самолечение), Reyna (фраги). Initiators: Sova (стрела инфо), KAY/O (саппрессия), Skye (собака). Controllers: Omen (дымы+телепорт), Brimstone (быстрые дымы), Viper (яд). Sentinels: Sage (хил+стена), Killjoy (ловушки), Cypher (камеры). Выбирай под состав.',k:[['Jett','дуэлянт+мобильность'],['Sova','разведка стрелой'],['Omen','дымы+телепорт'],['Sage','хил+стена'],['Killjoy','ловушки']]},
-        {t:'🎯 Оружие и экономика',d:'Phantom (2900) — спрей+глушит. Vandal (2900) — 1 tap голова любая дистанция. Spectre (1600) — force SMG. Operator (4700) — 1 в тело. Guardian (2250) — точный 1 tap. Экономика: Pistol(Classic+щит) → Eco(Sheriff/ничего) → Force(Spectre+щит) → Half(Guardian+щит) → Full(Vandal/Phantom+щит+способности+утка).',k:[['Phantom','спрей+глушение'],['Vandal','1 tap голова'],['Spectre','force buy'],['Operator','1 в тело'],['Full buy','Vandal+щит+скиллы']]},
-        {t:'⚡ Настройки',d:'Всё LOW. Чувствительность 0.3-0.5 @ 800 DPI (eDPI 200-600). FOV 103 (не меняется). Crosshair: 1-3-2-2 зелёный/белый. NVIDIA: Low Latency ON+Reflex. Bloom OFF, Distortion OFF. Монитор 144Hz+ — обязательно. Звук: HRTF ON.',k:[['eDPI','200-600'],['Crosshair','1-3-2-2 зелёный'],['Reflex','LOW LATENCY'],['144Hz','обязателен'],['Звук','HRTF ON']]},
-        {t:'💣 Способности (экономика)',d:'Покупай способности только после щита и оружия. Обычная утка: 100-200. Спелл: 200-300. Ульт: 6-8 очков. KAY/O — нож подавления (стоит 250). Sage — стена 400 (важная!). Brimstone — дымы бесплатные (первые 3). Сова — стрела+дрон (400+350). Не трать все деньги на способности — оставь на оружие.',k:[['Утка','100-200'],['Спелл','200-300'],['Sage стена','400'],['Brimstone','дымы бесплатно'],['Приоритет','щит→оружие→скиллы']]},
-        {t:'🗺️ Карты и вынос',d:'Каждая карта имеет свои дым-точки. Изучи 2-3 смока на карту. Вынос: прячься за углом, слушай звуки шагов. При выносе первыми выходят инициаторы (Sova/KAY/O), затем дуэлянты (Jett/Reyna). Контроллеры ставят дымы последними. Sentinels охраняют тыл.',k:[['Смоки','2-3 на карту'],['Вынос','init→duel→ctrl'],['Слушай','шаги'],['Timing','тайминг дымов'],['Занять','позицию первой']]},
-        {t:'🏆 Советы для высокого ранга',d:'Crosshair placement на уровне головы — всегда. Не перезаряжайся если не уверен что безопасно. Используй один и тот же бинд для способностей (мышечная память). Играй с тиммейтами по голосу — инфо +50% к победе. Смотри про-матчи (VCT) для тактик. Counter-strafe — остановись перед стрельбой.',k:[['Crosshair','уровень головы'],['Перезарядка','только в безопасности'],['Голос','коммуникация'],['VCT','про-матчи'],['Counter-strafe','остановка']]},
-    rdr2:{n:'RDR 2',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/library_hero.jpg',
-      g:[{t:'🐎 Заработок денег',d:'Охота на легендарных зверей — шкуры в Trapper (1 раз, дорого). Карты сокровищ (заберите золото — $500/слиток, 16 штук). Ограбление поездов (после сюжета — быстро подняться на скалы над тоннелем). Банк Леватикуса в конце. Собирай коллекционные карты сигарет. Dead Eye 3 ур — меть 2+ цели.',k:[['Сокровища','$500/слиток ×16'],['Dead Eye','3+ уровня'],['Легендарные','шкуры в Trapper'],['Ограбления','поезда'],['Карты сигарет','коллекция']]},
-        {t:'🔫 Боевая система',d:'Lancaster Repeater — лучшее оружие (скорость+точность). Schofield Revolver — убойный (держи в 2-м слоте). Dead Eye: Shift для замедления времени, меться в голову. Укрытия: Q/E — выглядывай. Не стой на открытом — враги стреляют метко. Всегда носи с собой бинты + лекарства + тоник Dead Eye.',k:[['Lancaster','лучший репитер'],['Schofield','убойный'],['Dead Eye','Shift+метка'],['Укрытия','Q/E'],['Лекарства','бинты+тоник']]},
-        {t:'⚡ Настройки',d:'API Vulkan (лучше DX12). TAA Medium (сглаживание). Resolution Scale 100%. Shadows/Water LOW. Grass LOW. 60Hz — VSync Половина (30 FPS стабильно). NVIDIA: Power MAX. Отключи онлайн если не играешь. Монитор 60Гц — включи вертикалку или ограничь до 30 кадров.',k:[['Vulkan','API'],['TAA','Medium'],['Shadows','LOW'],['Grass','LOW'],['VSync','Половина']]},
-        {t:'🏠 Лагерь и улучшения',d:'Улучшай лагерь через ящик пожертвований: сначала паёк для банды (здоровье), потом снаряжение (боеприпасы), лекарства. Купи чемодан для развлечений. Улучши лошадь (скорость+выносливость). Все улучшения сохраняются после переезда лагеря (глава 3). Вкладывай 50% дохода в лагерь.',k:[['Паёк','здоровье'],['Снаряжение','боеприпасы'],['Лекарства','лечение'],['Лошадь','скорость+вынос'],['Лагерь','50% дохода']]},
-        {t:'🗺️ Секреты и коллекции',d:'Каменные статуэтки (Rock Carvings) — 10 штук, дают коллекционный предмет. Динозаврские кости — 30 штук. Орхидеи (Exotics) — для миссии. Легендарные звери: 16 штук, карта у каждого. Сонник (Dreamcatcher) — каждый даёт траву. Призрак-поезд — на северо-востоке ночью.',k:[['Каменные','10 статуэток'],['Кости','30 динозавров'],['Орхидеи','Exotics миссия'],['Звери','16 легендарных'],['Поезд-призрак','северо-восток']]},
-        {t:'🏆 Советы по прохождению',d:'Не спеши с главным сюжетом — делай сайд-квесты. В каждой главе сначала собери ресурсы. Честь (Honour) влияет на концовку (высокая/низкая). Смена погоды: палатка у костра жди до утра. Лучшее оружие: Lancaster Repeater/Schofield Revolver + винтовка Rolling Block. Финал — 4 варианта концовки.',k:[['Сюжет','не спеши'],['Честь','влияет на финал'],['Оружие','Lancaster+Rolling'],['Финал','4 концовки'],['Сайд-квесты','делай всё']]},
-    gtav:{n:'GTA V',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/271590/library_hero.jpg',
-      g:[{t:'🚗 Ограбления (сюжет)',d:'В порядке прохождения: Оружейный магазин (выбери команду+купи броню) → Банк Сан-Андреас (взрывчатка на сейфы, тоннели) → ФБР (агент под прикрытием или силовой) → Золото (укради амфибии) → Финал ($300M). Биржа Лестера: инвестируй после его советов, продавай когда цена взлетит.',k:[['Банк','взрывчатка+тоннели'],['ФБР','агент/силовой'],['Золото','амфибии'],['Биржа','советы Лестера'],['Финал','$300M']]},
-        {t:'💎 GTA Online',d:'Cayo Perico Heist — $1-2M/ч в соло (купи Kosatka). Nightclub — пассивный афк-доход ($50k/день). Acid Lab — до $500k/день. Агентство — контракты от $50k. Бизнесы: офис→бункер→мотоклуб→Nightclub. Машины: Ocelot Virtue (бесплатно). Премиум: Oppressor MK2 (гриндинг).',k:[['Cayo Perico','$1-2M/ч'],['Nightclub','афк доход'],['Acid Lab','$500k/день'],['Kosatka','купи первой'],['Oppressor','MK2 гриндинг']]},
-        {t:'⚡ Настройки',d:'Shadows OFF, MSAA 2x или OFF, Grass LOW. Population Density/Variety 100%. VSync OFF, FPS 60 (через NVIDIA). Texture Quality HIGH (если VRAM хватает). В GTA Online: отключи голосовой чат. NVIDIA: Low Latency ON, Power MAX. Extended Distance Scaling 0%.',k:[['Shadows','OFF'],['Grass','LOW'],['VSync','OFF+FPS60'],['GTA Online','голос OFF'],['NVIDIA','Low Latency ON']]},
-        {t:'🏠 Свойства и бизнес',d:'Агентство — контракты $50k+. Ночной клуб — пассивка. Бункер — исследования (оптимизация). Офис CEO — хранилище товара. Ангар — миссии по угону самолёта. Мотоциклетный клуб — закладки по городу. Контрабанда (Special Cargo) — $20k за ящик, риск рейда.',k:[['Агентство','$50k+ контракты'],['Ночной клуб','пассивка'],['Бункер','исследования'],['CEO','хранилище'],['Ангар','угон самолёта']]},
-        {t:'🗺️ Секреты и пасхалки',d:'Space Docker — собери 50 частей. Лошадиные ставки с Жоржеттой — выиграй $2M. Кристаллы в продажу — найди и продай в плохих районах. Охота на сокровища (Treasure Hunt) — даёт $100k. Взлом банкоматов — 5 штук. UFO в пустыне — ночное время.',k:[['Space Docker','50 частей'],['Лошади','$2M'],['Кристаллы','продажа'],['Сокровища','$100k'],['UFO','пустыня ночью']]},
-        {t:'🏆 Машины и гонки',d:'Лучшие: Pariah (скорость), Krieger (трек), Emerus (трек). Суперкары: Adder, Zentorno (для старта). Для стрит-рейсинга: Sultan RS + Карусель. Дрифт: Futo. Off-road: Sanchez. Самолёт: Hydra (VTOL+пулемёт). Верталёт: Buzzard. Лодка: Dinghy. Секретный: Khanjali (танк).',k:[['Pariah','скорость'],['Krieger','трек'],['Hydra','VTOL+пули'],['Buzzard','верталёт'],['Khanjali','танк']]},
-    wot:{n:'World of Tanks',bg:'',
-      g:[{t:'⚙️ Тактика и броня',d:'Каждый танк имеет ВЛД (верх), НЛД (низ), башню, борта, корму. Hull-down — играй от башни на холмах. Кусты +50% маскировки: стреляй→откатись→пропади с засвета. На Энске — контролируй железку. На Песчаной реке — горка в центре. Не стой на открытом — арта и ПТ-САУ убьют.',k:[['Hull-down','от башни'],['Кусты','+50%'],['ВЛД/НЛД','уязвимости'],['Арта','не стой на поле'],['Энск','железка']]},
-        {t:'⌨️ Полезные бинды',d:'X — выключить орудие (снятие захвата). E — маркер «Огонь!». G — «Назад!». Shift — снайперка. Ctrl+ПКМ — маркер на миникарту. V — альтернативный снайперский режим. 1/2/3/4 — снаряды. 5/6/7 — расходники (огнетушитель, ремкомплект, аптечка). Зажим ПКМ — открепить прицел.',k:[['X','выкл орудие'],['E','маркер огня'],['Shift','снайперка'],['Ctrl+ПКМ','маркер карта'],['5-7','расходники']]},
-        {t:'⚡ Оптимизация',d:'Графика STD. Трава OFF в снайперке. Эффекты OFF. Дальность отрисовки 100%. NVIDIA: Digital Vibrance 100% (ярче враги). Launch: -dx11 -high -threads 8 -maxMem=8192 -flask. VSync OFF. Монитор 144Hz+. Отключи Game Bar и игровой режим. В WoT клиенте: отключи анимацию портала.',k:[['STD','графика'],['Трава','OFF'],['Digital Vibrance','100%'],['Launch','-dx11 -threads 8'],['Game Bar','отключи']]},
-        {t:'💰 Фарм серебра и опыта',d:'Играй на премиум танках 8 уровня (bonus к кредитам). Премиум аккаунт — +50% к кредитам + опыту. Не стреляй голдой без нужды. Используй малые ремкомплекты (дешевле). Вступай в клан — клановые бонусы. На 10 уровне серебро в минус — играй на 8-м для накопления.',k:[['Премиум 8','фарм серебра'],['Голда','не трать'],['Клан','бонусы'],['Малые ремки','дешевле'],['Уровень 8','для фарма']]},
-        {t:'🗺️ Карты и позиции',d:'Энск: железка — расстрел с рельс. Песчаная река: горка решает исход. Лайв Окс: холмы на 0-1 линии. Химмельсдорф: не лезь в город в тяжах — бей через рельсы. Прохоровка: кусты в центре. Эль-Халлуф: играй от escarp. Париж: не стой на мосту. Всегда смотри на миникарту.',k:[['Энск','железка'],['Песчаная','горка'],['Прохоровка','кусты'],['Химмельс','рельсы'],['Миникарта','смотри']]},
-        {t:'🏆 Прокачка экипажа',d:'Первые перки: Шестое чувство (командир) — чувствуй засвет. Ремонт — быстрее чинишь гусеницы. Плавный поворот башни — точнее стрельба в движении. Маскировка — для ПТ-САУ и лёгких. Орлиный глаз — больше обзора. Снайпер — шанс поджога. Доведи до 100% основного навыка сначала.',k:[['Шестое чувство','командир'],['Ремонт','гусеницы'],['Маскировка','ПТ-САУ'],['Орлиный глаз','обзор'],['100%','основной навык']]}
-  };}}}}}}}}}}}}// === MAIN HORIZONTAL SCROLL ===
+  // ===== GAME DATA =====
+  const G = {
+    cs2:{n:'CS2',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/library_hero.jpg',s:[
+      {t:'🎯 Спрей-контроль',d:'AK-47: 5 пуль вверх, потом диагональ. M4 — плавнее. Тренируй spray transfer. Deagle — пауза 0.5 сек.',k:[['AK-47','5 вверх → диагональ'],['M4','плавный спрей'],['Deagle','пауза 0.5 сек']]},
+      {t:'⌨️ Бинды',d:'1280×960 stretched. eDPI 800-1200. Jump на mwheeldown. Crosshair cl_crosshaircolor 5.',k:[['1280×960','stretched'],['eDPI','800-1200'],['Jump','mwheeldown']]},
+      {t:'⚡ Оптимизация',d:'Всё LOW, Shadows LOW. NVIDIA Low Latency ULTRA. Launch: -novid -high -threads 8. 144Hz+.',k:[['Shadows','LOW'],['NVIDIA','ULTRA'],['Launch','-novid -threads 8']]},
+      {t:'🗺️ Карты',d:'Mirage: mid контроль. Inferno: bananas. Dust 2: A long + B tunnels.',k:[['Mirage','mid'],['Inferno','bananas'],['Dust 2','A long + B']]},
+      {t:'💣 Гранаты',d:'Pop flash в воздухе. HE 98dmg. Molotov 40dps. Kit всегда.',k:[['Pop flash','воздух'],['HE','98dmg'],['Molotov','40dps']]},
+      {t:'🏆 Советы',d:'Crosshair на уровне головы. Trade kill. Стрельба через дым. Коммуникация.',k:[['Crosshair','голова'],['Trade kill','добивай'],['Через дым','по звуку']]},
+      {t:'🖥️ Оптимизация ПК',d:'Обнови драйвера. Game Bar OFF. План питания — макс производительность. SSD обязателен.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['SSD','обязателен']]}
+    ]},
+    dota:{n:'Dota 2',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/library_hero.jpg',s:[
+      {t:'🛡️ Саппорт',d:'Бебиситинг керри. Харасс врага. Пуллинг на :55. Денай <50% ХП. Старт: 2 варда+курьер.',k:[['Пуллинг',':55'],['Денай','<50%'],['Варды','возвышенности']]},
+      {t:'⚔️ Керри',d:'80+ крипов к 10 мин. Safe Lane. Контр-пики: AA, Riki, Ursa, OD.',k:[['Фарм','80+ к 10'],['Safe Lane','керри'],['Контр-пики','AA, Riki, Ursa']]},
+      {t:'🎯 Мидер',d:'Контроль руны. Bottle+Wand. Ротация на линии. Blink+Dagger на инициаторах.',k:[['Руна','каждые 2 мин'],['Bottle','восстановление'],['Blink','инициация']]},
+      {t:'⚡ Оптимизация',d:'-novid -high -threads 8. Vulkan для AMD, DX11 для старых. Autoexec.cfg 60+ команд.',k:[['Launch','-novid -threads 8'],['Vulkan','AMD'],['Autoexec','60+ команд']]},
+      {t:'🗺️ Расстановки',d:'2-1-2 классика. 3-1-1 трипл. Safe/Hard lane. Стаки на :53-:55.',k:[['2-1-2','классика'],['Стаки',':53-:55'],['Safe lane','низ/верх']]},
+      {t:'🛒 Предметы',d:'Саппорт: Force+Glimmer. Керри: Battlefury+Manta. BKB — обязателен.',k:[['Саппорт','Force+Glimmer'],['Керри','Battlefury+Manta'],['BKB','обязателен']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. Игровой режим ON. SSD.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['SSD','обязателен']]}
+    ]},
+    minecraft:{n:'Minecraft',bg:'',s:[
+      {t:'⛏️ Выживание',d:'День 1: дерево→камень→уголь. Y=11 алмазы. Зачарования. Деревня трейды.',k:[['День 1','камень→уголь'],['Y=11','алмазы'],['Зачарование','стол+книга']]},
+      {t:'🔧 Фермы',d:'Железная: голем+зомби. Опыт: спаунер+вода. Тростник: наблюдатель+поршень.',k:[['Железная','голем+зомби'],['Опыт','спаунер+вода'],['Тростник','наблюдатель']]},
+      {t:'⚡ Оптимизация',d:'OptiFine/Sodium+Fabric. Render 8-12. RAM 4-8GB. FOV 80-90.',k:[['OptiFine','Sodium+Fabric'],['RAM','4-8GB'],['FOV','80-90']]},
+      {t:'⚔️ PvP',d:'CPS 6+. Крит с прыжка +50%. Щит ПКМ. Тотем в offhand.',k:[['CPS','6+'],['Криты','+50%'],['Щит','ПКМ']]},
+      {t:'🏗️ Строительство',d:'Палитра 3-4 блока. Крыши плитами. Свет под коврами.',k:[['Палитра','3-4 блока'],['Крыши','плиты'],['Свет','ковры']]},
+      {t:'🏆 Советы',d:'Block clutch. MLG вода. TNT пушка. Wither под землёй.',k:[['Block clutch','блок в воздухе'],['MLG','вода'],['Wither','под землёй']]},
+      {t:'🖥️ Оптимизация ПК',d:'Выдели RAM. Поставь SSD. Драйвера. Закрой браузер.',k:[['RAM','4-8GB'],['SSD','обязателен'],['Браузер','закрой']]}
+    ]},
+    fortnite:{n:'Fortnite',bg:'',s:[
+      {t:'🔫 Строительство',d:'Wall+Ramp. 90-е. Редакты: окна, углы, тройные. Creative 15 мин/день.',k:[['Wall+Ramp','база'],['90-е','вращение'],['Редакты','окна+углы']]},
+      {t:'⌨️ Бинды',d:'Wall Q, Ramp E, Floor C. Sens 6-8@800DPI. Build Mode 1.8x.',k:[['Wall','Q'],['Ramp','E'],['Floor','C']]},
+      {t:'⚡ Настройки',d:'View Distance EPIC. Textures LOW. 3D Res 100%. Reflex ON. FPS 240.',k:[['View Distance','EPIC'],['Textures','LOW'],['Reflex','ON']]},
+      {t:'🎯 Оружие',d:'MK спрей. Thunder дробовик. Shockwave отход. Med Kits обязательно.',k:[['MK','спрей'],['Thunder','дробовик'],['Med Kits','обязательно']]},
+      {t:'🗺️ Стратегия',d:'Тихие точки. Rotate за 30-40 сек. End game не строй башни.',k:[['Landing','тихие точки'],['Rotate','30-40 сек'],['End game','не башни']]},
+      {t:'🏆 Продвинутые',d:'Box fight. Triple edit. Wall-taking. Cone jump.',k:[['Box fight','коробки'],['Triple edit','пол+стена+потолок'],['Cone jump','высота']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. 144Hz+. SSD.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['144Hz','+']]}
+    ]},
+    pubg:{n:'PUBG',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/578080/library_hero.jpg',s:[
+      {t:'🪂 Лендинг',d:'Угол 45°. 3+ здания. Приоритет: шлем+броня→оружие→медики→смок.',k:[['Угол','45°'],['Приоритет','шлем+броня'],['Smoke','обязательно']]},
+      {t:'🔫 Оружие',d:'M416 стабильный. Beryl урон+отдача. AWM 1 шот. Vector закрытые.',k:[['M416','стабильный'],['Beryl','урон+отдача'],['AWM','1 шот']]},
+      {t:'⌨️ Бинды',d:'Q/E lean. Z/C лечь/присесть. V камера. Alt осмотреться.',k:[['Q/E','lean'],['Z/C','лечь/присесть'],['V','FPS/TPS']]},
+      {t:'⚡ Настройки',d:'Screen Scale 100. AA LOW. Digital Vibrance 70%. VSync OFF.',k:[['Screen Scale','100%'],['Digital Vibrance','70%'],['VSync','OFF']]},
+      {t:'🗺️ Карты',d:'Erangel транспорт. Miramar машина. Sanhok пешком.',k:[['Erangel','транспорт'],['Miramar','машина'],['Sanhok','пешком']]},
+      {t:'🏆 Советы',d:'Не стреляй без уверенности. Смени позицию. В конце смоки.',k:[['Звук','привлекает'],['Смена','после фрага'],['End game','смоки']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. Макс производительность. SSD.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['SSD','обязателен']]}
+    ]},
+    overwatch:{n:'Overwatch',bg:'',s:[
+      {t:'🎯 Роли',d:'Tank: Reinhardt/Winston. Damage: Soldier/Tracer. Support: Ana/Mercy. 2-2-2.',k:[['Tank','щит+пространство'],['Damage','урон'],['Support','хил']]},
+      {t:'⌨️ Бинды',d:'Q ульт. Shift способность 1. E способность 2. Sens 4-8@800DPI. FOV 103.',k:[['Q','ульт'],['Sens','4-8@800DPI'],['FOV','103']]},
+      {t:'⚡ Настройки',d:'Render Scale 100%. Всё LOW. NVIDIA Low Latency ON. 144Hz+.',k:[['Render Scale','100%'],['NVIDIA','Low Latency'],['144Hz','+']]},
+      {t:'🏆 Competitive',d:'Counter-pick. Комбинируй ульты. Смотри про-матчи.',k:[['Counter-pick','меняйся'],['Ульты','комбинируй'],['Про','VCT']]},
+      {t:'💊 Хилинг',d:'Распределяй хил. Приоритет: Tank→DPS→Support. AD+прыжок.',k:[['Приоритет','Tank→DPS→Heal'],['Уворот','AD+прыжок'],['Аптечки','запомни']]},
+      {t:'🔥 Советы',d:'Counter-strafe. Не перезаряжайся без безопасности. Коммуникация.',k:[['Counter-strafe','остановка'],['Перезарядка','безопасно'],['Голос','инфа']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. SSD. Закрой Chrome.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['Chrome','закрой']]}
+    ]},
+    dbd:{n:'Dead by Daylight',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/381210/library_hero.jpg',s:[
+      {t:'🔪 Выживший',d:'Dead Hard (уворот). Borrowed Time (спасение). Windows (подсветка). Loop паллеты.',k:[['Dead Hard','уворот'],['Borrowed Time','спасение'],['Windows','подсветка']]},
+      {t:'🎃 Киллер',d:'Corrupt блок генов. Pop -30%. NOED. Proxy camp 20м.',k:[['Corrupt','блок 120 сек'],['Pop','-30%'],['NOED','конец']]},
+      {t:'⚡ Настройки',d:'FOV 103. Всё LOW. AA OFF. VSync OFF. Head bob OFF.',k:[['FOV','103'],['AA','OFF'],['Head bob','OFF']]},
+      {t:'🗺️ Карты',d:'Macmillan паллеты. Coldwind кукуруза. Lery коридоры.',k:[['Macmillan','паллеты'],['Coldwind','кукуруза'],['Lery','коридоры']]},
+      {t:'🏆 Перки',d:'Survivor: Dead+Borrowed+Windows. Killer: Corrupt+Pop+NOED.',k:[['Survivor','Dead+Borrowed+Windows'],['Killer','Corrupt+Pop+NOED'],['Инфо','BBQ+Discordance']]},
+      {t:'💡 Советы',d:'Кусты приседай. Сломай паллету. Spin уворот.',k:[['Кусты','приседай'],['Паллеты','сломай'],['Spin','уворот']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. SSD. VSync OFF.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['SSD','обязателен']]}
+    ]},
+    rust:{n:'Rust',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/252490/library_hero.jpg',s:[
+      {t:'🦀 Первый день',d:'200 камня+100 дерева. База 2×1. TC в центре. Еда охота/ягоды.',k:[['Старт','200+100'],['База','2×1'],['TC','центр']]},
+      {t:'🏠 База',d:'Honeycomb. Code lock. Двойная дверь. Shotgun trap. TC бензин.',k:[['Honeycomb','внешние стены'],['Code lock','не ключ'],['TC','бензин']]},
+      {t:'🔫 PvP',d:'SAP+Crossbow база. AK-47 топ. Satchel дёшево для рейда.',k:[['SAP+Crossbow','база'],['AK-47','топ'],['Satchel','дёшево']]},
+      {t:'⚡ Настройки',d:'Всё LOW. Draw Distance 500-1000. Shadows OFF. Grass OFF.',k:[['Draw Distance','500-1000'],['Shadows','OFF'],['Grass','OFF']]},
+      {t:'🗺️ Карта',d:'Outpost нейтрал. Military Tunnel топ лут. Bandit Camp.',k:[['Outpost','нейтрал'],['Military Tunnel','топ лут'],['Bandit Camp','+200м']]},
+      {t:'🔥 Крафт',d:'Tech tree сразу. Сера на горах. Satchel 2000 серы. C4 4000.',k:[['Tech tree','сразу'],['Сера','горы'],['C4','4000 серы']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. SSD. Launch -high -maxMem.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['Launch','-maxMem']]}
+    ]},
+    valorant:{n:'Valorant',bg:'',s:[
+      {t:'🔫 Агенты',d:'Duelists Jett/Phoenix. Initiators Sova/KAY/O. Controllers Omen/Brim. Sentinels Sage/Killjoy.',k:[['Duelist','Jett'],['Initiator','Sova'],['Controller','Omen']]},
+      {t:'🎯 Оружие',d:'Phantom спрей. Vandal 1 tap. Spectre force. Operator 1 тело.',k:[['Phantom','спрей'],['Vandal','1 tap'],['Operator','1 тело']]},
+      {t:'⚡ Настройки',d:'Всё LOW. eDPI 200-600. Crosshair 1-3-2-2. Reflex ON. 144Hz+.',k:[['eDPI','200-600'],['Crosshair','1-3-2-2'],['Reflex','ON']]},
+      {t:'💣 Экономика',d:'Pistol→Eco→Force→Half→Full. Приоритет: щит→оружие→скиллы.',k:[['Eco','pistol→force→full'],['Приоритет','щит→оружие'],['Full','Vandal+щит']]},
+      {t:'🗺️ Карты',d:'Смоки 2-3 на карту. Вынос: init→duel→ctrl. Тайминг.',k:[['Смоки','2-3 на карту'],['Вынос','init→duel→ctrl'],['Тайминг','дымы']]},
+      {t:'🏆 Высокий ранг',d:'Crosshair голова. Не перезаряжайся. Голос инфа. Counter-strafe.',k:[['Crosshair','голова'],['Голос','инфа'],['Counter-strafe','остановка']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. SSD. 144Hz+.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['144Hz','+']]}
+    ]},
+    rdr2:{n:'RDR 2',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/library_hero.jpg',s:[
+      {t:'🐎 Деньги',d:'Легендарные звери→Trapper. Карты сокровищ $500×16. Ограбление поездов.',k:[['Сокровища','$500×16'],['Dead Eye','3+'],['Ограбления','поезда']]},
+      {t:'🔫 Бой',d:'Lancaster лучший. Schofield убойный. Dead Eye Shift+метка. Укрытия Q/E.',k:[['Lancaster','лучший'],['Schofield','убойный'],['Dead Eye','Shift']]},
+      {t:'⚡ Настройки',d:'Vulkan API. TAA Medium. Shadows LOW. Grass LOW.',k:[['Vulkan','API'],['TAA','Medium'],['Shadows','LOW']]},
+      {t:'🏠 Лагерь',d:'Паёк здоровье. Снаряжение боеприпасы. 50% дохода в лагерь.',k:[['Паёк','здоровье'],['Снаряжение','боеприпасы'],['Лагерь','50%']]},
+      {t:'🗺️ Секреты',d:'Каменные 10 шт. Кости 30. Звери 16 легендарных. Поезд ночью.',k:[['Каменные','10'],['Кости','30'],['Звери','16']]},
+      {t:'🏆 Прохождение',d:'Не спеши. Честь влияет. Lancaster+Rolling. 4 концовки.',k:[['Сюжет','не спеши'],['Честь','влияет'],['Финал','4 концовки']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. SSD. VSync половина.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['VSync','половина']]}
+    ]},
+    gtav:{n:'GTA V',bg:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/271590/library_hero.jpg',s:[
+      {t:'🚗 Ограбления',d:'Оружейный→Банк→ФБР→Золото→$300M. Биржа Лестера.',k:[['Ограбления','до $300M'],['Биржа','советы Лестера'],['Финал','$300M']]},
+      {t:'💎 GTA Online',d:'Cayo Perico $1-2M/ч. Nightclub афк. Acid Lab $500k/день. Kosatka первой.',k:[['Cayo Perico','$1-2M/ч'],['Nightclub','афк'],['Kosatka','первая']]},
+      {t:'⚡ Настройки',d:'Shadows OFF. MSAA 2x. Grass LOW. VSync OFF+FPS60. Голос OFF.',k:[['Shadows','OFF'],['MSAA','2x'],['Голос','OFF']]},
+      {t:'🏠 Бизнес',d:'Агентство $50k+. Nightclub пассивка. Бункер исследования.',k:[['Агентство','$50k+'],['Nightclub','пассивка'],['Бункер','исследования']]},
+      {t:'🗺️ Секреты',d:'Space Docker 50 частей. Лошади $2M. Кристаллы. UFO ночью.',k:[['Space Docker','50 частей'],['Лошади','$2M'],['UFO','ночью']]},
+      {t:'🏆 Машины',d:'Pariah скорость. Krieger трек. Hydra VTOL. Buzzard.',k:[['Pariah','скорость'],['Krieger','трек'],['Hydra','VTOL']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. SSD. NVIDIA Low Latency.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['NVIDIA','Low Latency']]}
+    ]},
+    wot:{n:'World of Tanks',bg:'',s:[
+      {t:'⚙️ Тактика',d:'Hull-down от башни. Кусты +50% маскировки. ВЛД/НЛД уязвимости.',k:[['Hull-down','от башни'],['Кусты','+50%'],['ВЛД/НЛД','уязвимости']]},
+      {t:'⌨️ Бинды',d:'X выкл орудие. E маркер. Shift снайперка. Ctrl+ПКМ маркер.',k:[['X','выкл орудие'],['E','маркер'],['Shift','снайперка']]},
+      {t:'⚡ Оптимизация',d:'STD графика. Трава OFF. Digital Vibrance 100%. Launch -dx11 -high.',k:[['STD','графика'],['Трава','OFF'],['Digital Vibrance','100%']]},
+      {t:'💰 Фарм',d:'Премиум 8 ур. Премиум аккаунт. Клан бонусы. 8 ур для фарма.',k:[['Премиум 8','фарм'],['Клан','бонусы'],['8 ур','серебро']]},
+      {t:'🗺️ Карты',d:'Энск железка. Песчаная горка. Прохоровка кусты.',k:[['Энск','железка'],['Песчаная','горка'],['Прохоровка','кусты']]},
+      {t:'🏆 Экипаж',d:'6 чувство командир. Ремонт. Маскировка ПТ. Орлиный глаз.',k:[['6 чувство','командир'],['Ремонт','гусеницы'],['Маскировка','ПТ']]},
+      {t:'🖥️ Оптимизация ПК',d:'Драйвера. Game Bar OFF. SSD. Digital Vibrance 100%.',k:[['Драйвера','обнови'],['Game Bar','OFF'],['Digital Vibrance','100%']]}
+    ]}
+  };
+
+  // ===== MAIN SCROLL =====
   const track=document.getElementById('track'),dots=document.querySelectorAll('.dot'),pfill=document.getElementById('pfill');
-  const total=3,maxOff=-(total-1)*100;let target=0,current=0,vel=0,running=false;
-  function tick(){const d=target-current;if(Math.abs(d)>.05||Math.abs(vel)>.05){vel+=d*.06;vel*=.88;current+=vel;if(current>0){current=0;vel=0}if(current<maxOff){current=maxOff;vel=0}track.style.transform='translate3d('+current+'vw,0,0)';const i=Math.min(Math.round(Math.abs(current/100)),total-1);dots.forEach((d,j)=>d.classList.toggle('active',j===i));pfill.style.width=(i/(total-1))*100+'%';requestAnimationFrame(tick)}else{running=false;if(Math.abs(target-current)>.5){target=Math.round(current/100)*-100;vel+=(target-current)*.06;running=true;requestAnimationFrame(tick)}}}
-  function start(){if(!running){running=true;requestAnimationFrame(tick)}}
-  function goTo(i){target=-i*100;target=Math.max(maxOff,Math.min(0,target));vel+=(target-current)*.1;start()}
+  const total=3,maxOff=-(total-1)*100;let t=0,c=0,v=0,run=false;
+  function tick(){const d=t-c;if(Math.abs(d)>.05||Math.abs(v)>.05){v+=d*.06;v*=.88;c+=v;if(c>0){c=0;v=0}if(c<maxOff){c=maxOff;v=0}track.style.transform='translate3d('+c+'vw,0,0)';const i=Math.min(Math.round(Math.abs(c/100)),total-1);dots.forEach((d,j)=>d.classList.toggle('active',j===i));pfill.style.width=(i/(total-1))*100+'%';requestAnimationFrame(tick)}else{run=false;if(Math.abs(t-c)>.5){t=Math.round(c/100)*-100;v+=(t-c)*.06;run=true;requestAnimationFrame(tick)}}}
+  function start(){if(!run){run=true;requestAnimationFrame(tick)}}
+  function goTo(i){t=-i*100;t=Math.max(maxOff,Math.min(0,t));v+=(t-c)*.1;start()}
   window.goTo=goTo;
-  document.addEventListener('wheel',function(e){if(e.ctrlKey||document.getElementById('gameView').classList.contains('open'))return;e.preventDefault();target-=e.deltaY*.25;target=Math.max(maxOff,Math.min(0,target));start()},{passive:false});
+  document.addEventListener('wheel',function(e){if(e.ctrlKey||document.getElementById('go').classList.contains('open'))return;e.preventDefault();t-=e.deltaY*.25;t=Math.max(maxOff,Math.min(0,t));start()},{passive:false});
   dots.forEach(function(d){d.addEventListener('click',function(){goTo(parseInt(d.dataset.i))})});
-  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();target=Math.max(maxOff,target-100);vel+=(target-current)*.1;start()}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();target=Math.min(0,target+100);vel+=(target-current)*.1;start()}});
 
-  // === GAME VIEW (HORIZONTAL SECTIONS) ===
-  let gvTarget=0,gvCurrent=0,gvVel=0,gvRunning=false,gvTotal=0,gvMaxOff=0,gvGame=null;
-  const gvTrack=document.getElementById('gvTrack'),gvProgress=document.getElementById('gvProgress'),gvBg=document.getElementById('gvBg');
+  // ===== GAME CARDS =====
+  const games=[{k:'cs2',i:'🎯',n:'CS2'},{k:'dota',i:'⚔️',n:'Dota 2'},{k:'minecraft',i:'⛏️',n:'Minecraft'},{k:'fortnite',i:'🔫',n:'Fortnite'},{k:'pubg',i:'🪂',n:'PUBG'},{k:'overwatch',i:'🎯',n:'Overwatch'},{k:'dbd',i:'🔪',n:'DBD'},{k:'rust',i:'🦀',n:'Rust'},{k:'valorant',i:'🔫',n:'Valorant'},{k:'rdr2',i:'🐎',n:'RDR 2'},{k:'gtav',i:'🚗',n:'GTA V'},{k:'wot',i:'⚙️',n:'WoT'}];
+  const gg=document.getElementById('gameGrid');
+  games.forEach(function(g){const d=document.createElement('div');d.className='gcard';d.innerHTML='<span class="ic">'+g.i+'</span><span class="nm">'+g.n+'</span>';d.onclick=function(){openGame(g.k)};gg.appendChild(d)});
 
-  function openGameView(game){
-    gvGame=game;applyP(game);const data=guides[game];if(!data)return;
-    // Background
-    if(data.bg){gvBg.style.backgroundImage='url('+data.bg+')'}else{gvBg.style.backgroundImage='none'}
-    // Build slides
-    let html='';data.g.forEach(function(g,i){html+='<div class="gv-slide"><div class="sc"><h2>'+g.t+'</h2><p>'+g.d+'</p><div class="gk">';g.k.forEach(function(kv){html+='<div class="gk-item"><div class="key">'+kv[0]+'</div><div class="desc">'+kv[1]+'</div></div>'});html+='</div></div></div>'});
-    gvTrack.innerHTML=html;
-    gvTotal=data.g.length;gvMaxOff=-(gvTotal-1)*100;
-    gvTarget=0;gvCurrent=0;gvVel=0;
-    gvTrack.style.transform='translate3d(0,0,0)';
-    updateGvDots();
-    document.getElementById('gameView').classList.add('open');
-    document.getElementById('backBtn').classList.add('show');
+  // ===== GAME OVERLAY =====
+  const go=document.getElementById('go'),gt=document.getElementById('gt'),gp=document.getElementById('gp'),goBg=document.getElementById('goBg');
+  let gvT=0,gvC=0,gvV=0,gvRun=false,gvTotal=0,gvMax=0;
+
+  function openGame(key){
+    const data=G[key];if(!data)return;
+    setC(games.find(function(g){return g.k===key})?null:null); // don't change color here
+    if(data.bg){goBg.style.backgroundImage='url('+data.bg+')'}else{goBg.style.backgroundImage='none'}
+    let html='';data.s.forEach(function(s){html+='<div class="gs"><div class="sc"><h2>'+s.t+'</h2><p>'+s.d+'</p><ul>';s.k.forEach(function(kv){html+='<li><strong>'+kv[0]+'</strong><span>'+kv[1]+'</span></li>'});html+='</ul></div></div>'});
+    gt.innerHTML=html;
+    gvTotal=data.s.length;gvMax=-(gvTotal-1)*100;
+    gvT=0;gvC=0;gvV=0;gt.style.transform='translate3d(0,0,0)';
+    updateGvDots();go.classList.add('open');
+    document.querySelectorAll('.nav-btn').forEach(function(b){b.style.display='none'});
   }
-  window.openGameView=openGameView;
 
-  function closeGameView(){
-    document.getElementById('gameView').classList.remove('open');
-    document.getElementById('backBtn').classList.remove('show');
-    applyP('default');
-  }
-  window.closeGameView=closeGameView;
+  function closeGame(){go.classList.remove('open');document.querySelectorAll('.nav-btn').forEach(function(b){b.style.display=''})}
+  window.closeGame=closeGame;
 
-  function gvTick(){const d=gvTarget-gvCurrent;if(Math.abs(d)>.05||Math.abs(gvVel)>.05){gvVel+=d*.06;gvVel*=.88;gvCurrent+=gvVel;if(gvCurrent>0){gvCurrent=0;gvVel=0}if(gvCurrent<gvMaxOff){gvCurrent=gvMaxOff;gvVel=0}gvTrack.style.transform='translate3d('+gvCurrent+'vw,0,0)';updateGvDots();requestAnimationFrame(gvTick)}else{gvRunning=false}}
-  function gvStart(){if(!gvRunning){gvRunning=true;requestAnimationFrame(gvTick)}}
-  function gvGo(i){gvTarget=-i*100;gvTarget=Math.max(gvMaxOff,Math.min(0,gvTarget));gvVel+=(gvTarget-gvCurrent)*.1;gvStart()}
+  function gvTick(){const d=gvT-gvC;if(Math.abs(d)>.05||Math.abs(gvV)>.05){gvV+=d*.06;gvV*=.88;gvC+=gvV;if(gvC>0){gvC=0;gvV=0}if(gvC<gvMax){gvC=gvMax;gvV=0}gt.style.transform='translate3d('+gvC+'vw,0,0)';updateGvDots();requestAnimationFrame(gvTick)}else{gvRun=false}}
+  function gvStart(){if(!gvRun){gvRun=true;requestAnimationFrame(gvTick)}}
 
   function updateGvDots(){
-    const idx=Math.min(Math.round(Math.abs(gvCurrent/100)),gvTotal-1);
-    gvProgress.innerHTML='<span style="font-size:.7rem;color:var(--text-dim);margin-right:4px">'+(idx+1)+'/'+gvTotal+'</span>';
-    for(let i=0;i<gvTotal;i++){const d=document.createElement('div');d.className='gv-dot'+(i===idx?' active':'');d.onclick=function(){gvGo(i)};gvProgress.appendChild(d)}
+    const idx=Math.min(Math.round(Math.abs(gvC/100)),gvTotal-1);
+    gp.innerHTML='<span style="font-size:.7rem;color:rgba(255,255,255,.45);margin-right:4px">'+(idx+1)+'/'+gvTotal+'</span>';
+    for(let i=0;i<gvTotal;i++){const d=document.createElement('div');d.className='gd'+(i===idx?' active':'');d.onclick=function(){gvT=-i*100;gvT=Math.max(gvMax,Math.min(0,gvT));gvV+=(gvT-gvC)*.1;gvStart()};gp.appendChild(d)}
   }
 
-  // GView wheel
   document.addEventListener('wheel',function(e){
-    if(!document.getElementById('gameView').classList.contains('open'))return;
-    if(e.ctrlKey)return;e.preventDefault();
-    gvTarget-=e.deltaY*.25;gvTarget=Math.max(gvMaxOff,Math.min(0,gvTarget));gvStart()
+    if(!go.classList.contains('open'))return;if(e.ctrlKey)return;e.preventDefault();
+    gvT-=e.deltaY*.25;gvT=Math.max(gvMax,Math.min(0,gvT));gvStart()
   },{passive:false});
 
-  document.addEventListener('keydown',function(e){
-    if(!document.getElementById('gameView').classList.contains('open'))return;
-    if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();gvTarget=Math.max(gvMaxOff,gvTarget-100);gvVel+=(gvTarget-gvCurrent)*.1;gvStart()}
-    if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();gvTarget=Math.min(0,gvTarget+100);gvVel+=(gvTarget-gvCurrent)*.1;gvStart()}
-  });
-
-  // === GAME GRID ===
-  const gameList=[{k:'cs2',ic:'🎯',nm:'CS2'},{k:'dota',ic:'⚔️',nm:'Dota 2'},{k:'minecraft',ic:'⛏️',nm:'Minecraft'},{k:'fortnite',ic:'🔫',nm:'Fortnite'},{k:'pubg',ic:'🪂',nm:'PUBG'},{k:'overwatch',ic:'🎯',nm:'Overwatch'},{k:'dbd',ic:'🔪',nm:'DBD'},{k:'rust',ic:'🦀',nm:'Rust'},{k:'valorant',ic:'🔫',nm:'Valorant'},{k:'rdr2',ic:'🐎',nm:'RDR 2'},{k:'gtav',ic:'🚗',nm:'GTA V'},{k:'wot',ic:'⚙️',nm:'WoT'}];
-  const grid=document.getElementById('gameGrid');
-  gameList.forEach(function(g){const div=document.createElement('div');div.className='gcard';div.innerHTML='<span class="ic">'+g.ic+'</span><span class="nm">'+g.nm+'</span>';div.onclick=function(){openGameView(g.k)};grid.appendChild(div)});
-
-  // Dropdown
-  const dd=document.getElementById('gamesDropdown');
-  document.getElementById('gamesBtn').addEventListener('click',function(e){e.stopPropagation();dd.classList.toggle('open')});
-  document.addEventListener('click',function(){dd.classList.remove('open')});
-  const dm=document.getElementById('dropdownMenu');
-  gameList.forEach(function(g){const btn=document.createElement('button');btn.className='dropdown-item';btn.innerHTML='<span class="dot" style="background:'+pal[g.k].a+'"></span>'+g.nm;btn.onclick=function(){openGameView(g.k);dd.classList.remove('open')};dm.appendChild(btn)});
-
-  // === STARS ===
+  // ===== STARS =====
   const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');let W,H,stars=[];
   function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
   window.addEventListener('resize',resize);resize();
-  for(let i=0;i<200;i++){stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.08,vy:(Math.random()-.5)*.08,speed:Math.random()*.02+.005,phase:Math.random()*Math.PI*2})}
-  function drawStars(){ctx.clearRect(0,0,W,H);const absP=Math.abs(current/maxOff)||0,t=Date.now()*.001;stars.forEach(function(s,i){s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=W;if(s.x>W)s.x=0;if(s.y<0)s.y=H;if(s.y>H)s.y=0;const px=s.x+(i%3-1)*absP*20;const tw=Math.sin(t*s.speed*10+s.phase)*.4+.6;ctx.beginPath();ctx.arc(px,s.y,s.r,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+(tw*.6)+')';ctx.fill();if(s.r>1){ctx.beginPath();ctx.arc(px,s.y,s.r*3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+(tw*.05)+')';ctx.fill()}if(s.r>1.2){ctx.beginPath();ctx.moveTo(px-s.r*6,s.y);ctx.lineTo(px+s.r*6,s.y);ctx.moveTo(px,s.y-s.r*6);ctx.lineTo(px,s.y+s.r*6);ctx.strokeStyle='rgba(255,255,255,'+(tw*.15)+')';ctx.lineWidth=.5;ctx.stroke()}});requestAnimationFrame(drawStars)}
-  drawStars();
+  for(let i=0;i<200;i++){stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.08,vy:(Math.random()-.5)*.08,sp:Math.random()*.02+.005,ph:Math.random()*Math.PI*2})}
+  function draw(){ctx.clearRect(0,0,W,H);const ab=Math.abs(c/maxOff)||0,n=Date.now()*.001;stars.forEach(function(s,i){s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=W;if(s.x>W)s.x=0;if(s.y<0)s.y=H;if(s.y>H)s.y=0;const px=s.x+(i%3-1)*ab*20;const tw=Math.sin(n*s.sp*10+s.ph)*.4+.6;ctx.beginPath();ctx.arc(px,s.y,s.r,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+(tw*.6)+')';ctx.fill();if(s.r>1){ctx.beginPath();ctx.arc(px,s.y,s.r*3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+(tw*.05)+')';ctx.fill()}if(s.r>1.2){ctx.beginPath();ctx.moveTo(px-s.r*6,s.y);ctx.lineTo(px+s.r*6,s.y);ctx.moveTo(px,s.y-s.r*6);ctx.lineTo(px,s.y+s.r*6);ctx.strokeStyle='rgba(255,255,255,'+(tw*.15)+')';ctx.lineWidth=.5;ctx.stroke()}});requestAnimationFrame(draw)}
+  draw();
   track.style.transform='translate3d(0,0,0)';
 </script>
 </body>
